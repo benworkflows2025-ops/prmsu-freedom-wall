@@ -22,7 +22,7 @@ const SITE = 'https://prmsu-freedom-wall.netlify.app';
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 const json = (obj: unknown, status = 200) =>
