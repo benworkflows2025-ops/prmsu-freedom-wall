@@ -327,8 +327,12 @@ function buildAppCard(app) {
     approve.onclick = async () => {
       const ok = await confirmDialog({ title: 'Approve ' + (app.full_name || 'this applicant') + '?', message: 'They become a moderator, and their ID + selfie are deleted right away.', confirmText: 'Approve' });
       if (!ok) return;
-      try { await DB.approveApplication(app); toast('Approved. Photos deleted.', 'ok'); loadDash(); }
-      catch (err) { toast(err.message || 'Could not approve.', 'err'); }
+      try {
+        await DB.approveApplication(app);
+        try { await DB.notifyApproved(app.email, app.full_name); toast('Approved + emailed them. Photos deleted.', 'ok'); }
+        catch (e) { toast('Approved. Photos deleted. (Email not sent yet.)', 'ok'); }
+        loadDash();
+      } catch (err) { toast(err.message || 'Could not approve.', 'err'); }
     };
     const reject = el('button', 'btn danger small', 'Reject');
     reject.onclick = async () => {

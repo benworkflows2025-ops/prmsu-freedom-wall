@@ -412,15 +412,22 @@ function openOwnerChat() {
     foot.appendChild(ta); foot.appendChild(send); sheet.appendChild(foot);
 
     let msgs = [];
+    let rendered = false;
     const scrollDown = () => { box.scrollTop = box.scrollHeight; };
     const autoGrow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(110, ta.scrollHeight) + 'px'; };
     const load = async (scroll) => {
       try {
         const fresh = await DB.fetchOwnerThread();
-        if (fresh.length !== msgs.length) { msgs = fresh; renderChatBubbles(box, msgs); if (scroll) scrollDown(); }
+        if (!rendered || fresh.length !== msgs.length) { msgs = fresh; renderChatBubbles(box, msgs); rendered = true; if (scroll) scrollDown(); }
         try { localStorage.setItem('prmsu_owner_seen', String(Date.now())); } catch (e) {}
         updateOwnerDot();
-      } catch (e) {}
+      } catch (e) {
+        if (!rendered) {
+          box.textContent = '';
+          box.appendChild(el('div', 'chat-empty', 'Chat is not available right now. Please try again in a little bit.'));
+          rendered = true;
+        }
+      }
     };
     const doSend = async () => {
       const body = ta.value.trim(); if (!body) return;

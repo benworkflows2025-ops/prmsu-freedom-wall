@@ -230,6 +230,15 @@ export const DB = {
     if (error) boom(error, 'Could not approve.');
   },
 
+  // Best-effort "you're approved" email via the notify-approved Edge Function.
+  // Throws if the function isn't deployed yet; the caller treats it as optional.
+  async notifyApproved(email, name) {
+    if (!CONFIGURED) return { skipped: true };
+    const { data, error } = await supa.functions.invoke('notify-approved', { body: { email, name: name || '' } });
+    if (error) throw new Error(error.message || 'Email function not available.');
+    return data;
+  },
+
   async rejectApplication(app) {
     if (!CONFIGURED) {
       const list = demo.read(DEMO_APPS);
