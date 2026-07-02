@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--blue:#103A8A;--blue-d:#0C2E6E;--gold:#F5B82E}
+  html,body{width:1200px;height:1200px;overflow:hidden}
+  body{
+    font-family:"Inter",sans-serif;color:#fff;position:relative;text-align:center;
+    background:
+      radial-gradient(120% 90% at 50% 8%, rgba(255,255,255,.10), rgba(255,255,255,0) 45%),
+      radial-gradient(rgba(255,255,255,.06) 1.6px, transparent 1.6px) 0 0/30px 30px,
+      linear-gradient(160deg,#123f96 0%, var(--blue) 45%, var(--blue-d) 100%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:90px;
+  }
+  .rail{position:absolute;top:0;left:0;right:0;height:14px;background:linear-gradient(90deg,var(--gold),#FFD56A 50%,var(--gold))}
+  .seal{width:150px;height:150px;border-radius:50%;background:#fff;padding:9px;box-shadow:0 10px 28px rgba(0,0,0,.32);margin-bottom:30px}
+  .eyebrow{font-size:26px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+  .eyebrow small{display:block;color:#C7D4EC;letter-spacing:.12em;font-size:19px;margin-top:12px;font-weight:600}
+  h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:150px;line-height:.95;letter-spacing:-.03em;margin:34px 0 0}
+  h1 .g{color:var(--gold)}
+  .u{width:150px;height:11px;border-radius:6px;background:var(--gold);margin:40px auto 36px}
+  .tag{font-size:40px;line-height:1.4;color:rgba(255,255,255,.92);font-weight:500;max-width:820px}
+  .foot{position:absolute;left:0;right:0;bottom:66px;font-size:23px;color:#C7D4EC;font-weight:600}
+</style>
+</head>
+<body>
+  <div class="rail"></div>
+  <img class="seal" src="seal.png" alt="">
+  <div class="eyebrow">PRMSU<small>President Ramon Magsaysay State University</small></div>
+  <h1>Freedom<br><span class="g">Wall</span></h1>
+  <div class="u"></div>
+  <div class="tag">Say it anonymously. Post, comment, and keep it kind, mga Ramonians.</div>
+  <div class="foot">Anonymous · student-run · not an official university tool</div>
+</body>
+</html>
