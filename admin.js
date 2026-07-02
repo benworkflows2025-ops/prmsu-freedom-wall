@@ -75,9 +75,9 @@ async function togglePause() {
 let authMode = 'signin';
 function setAuthMode(mode) {
   authMode = mode;
-  $('loginTitle').textContent = mode === 'signin' ? 'Admin sign in' : 'Create your account';
+  $('loginTitle').textContent = mode === 'signin' ? 'Sign in' : 'Create your account';
   $('loginSub').textContent = mode === 'signin'
-    ? 'Sign in to moderate the wall. This area is only for administrators.'
+    ? 'Sign in to moderate the wall. For admins and approved moderators.'
     : 'Account creation is only for people already approved to moderate. Not approved yet? Apply to moderate first.';
   $('authBtn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
   $('password').setAttribute('autocomplete', mode === 'signin' ? 'current-password' : 'new-password');
