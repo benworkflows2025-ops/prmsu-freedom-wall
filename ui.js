@@ -78,6 +78,41 @@ function trapTab(e, card) {
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
+/* ---------------- bottom sheet (mobile composer) ---------------- */
+export function openSheet(build) {
+  return new Promise((resolve) => {
+    const prev = document.activeElement;
+    const overlay = el('div', 'sheet-overlay');
+    const sheet = el('div', 'sheet');
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.appendChild(el('div', 'sheet-handle'));
+    overlay.appendChild(sheet);
+
+    let done = false;
+    const close = (result) => {
+      if (done) return;
+      done = true;
+      document.removeEventListener('keydown', onKey, true);
+      overlay.classList.remove('show');
+      setTimeout(() => { overlay.remove(); if (prev && prev.focus) prev.focus(); }, 300);
+      resolve(result === undefined ? null : result);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); close(null); }
+      if (e.key === 'Tab') trapTab(e, sheet);
+    };
+    document.addEventListener('keydown', onKey, true);
+    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) close(null); });
+
+    build(close, sheet);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+    const first = sheet.querySelector('[data-autofocus]') || sheet.querySelector('textarea, input, button');
+    if (first) first.focus();
+  });
+}
+
 /* ---------------- confirm ---------------- */
 export function confirmDialog({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
   return openModal((close, card) => {

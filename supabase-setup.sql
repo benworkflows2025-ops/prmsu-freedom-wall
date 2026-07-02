@@ -44,6 +44,10 @@ create table if not exists public.posts (
 -- reactions were removed from the wall; drop the old column if it exists
 alter table public.posts drop column if exists reactions;
 
+-- redesign: each post has a category + a simple like counter
+alter table public.posts add column if not exists category text not null default 'confession';
+alter table public.posts add column if not exists like_count integer not null default 0;
+
 create index if not exists posts_status_created_idx
   on public.posts (status, created_at desc);
 
@@ -87,12 +91,14 @@ $$;
 --  WRITE PATH FOR ANONYMOUS VISITORS (SECURITY DEFINER, validated)
 -- ----------------------------------------------------------------------------
 
--- Create a post. Anonymous callers may only set body / nickname / color.
--- Everything else (status, report count) is forced by the server.
+-- Create a post. Anonymous callers may only set body / nickname / color / category.
+-- Everything else (status, counts) is forced by the server.
+drop function if exists public.create_post(text, text, text);
 create or replace function public.create_post(
-  p_body    text,
+  p_body     text,
   p_nickname text default null,
-  p_color   text default 'sky'
+  p_color    text default 'sky',
+  p_category text default 'confession'
 )
 returns public.posts
 language plpgsql
@@ -104,30 +110,42 @@ declare
   clean_body  text := btrim(coalesce(p_body, ''));
   clean_nick  text := nullif(btrim(coalesce(p_nickname, '')), '');
   clean_color text := coalesce(nullif(btrim(coalesce(p_color, '')), ''), 'sky');
+  clean_cat   text := lower(coalesce(nullif(btrim(coalesce(p_category, '')), ''), 'confession'));
 begin
-  if char_length(clean_body) = 0 then
-    raise exception 'Post cannot be empty.';
-  end if;
-  if char_length(clean_body) > 500 then
-    raise exception 'Post is too long (max 500 characters).';
-  end if;
-  if clean_nick is not null and char_length(clean_nick) > 24 then
-    clean_nick := left(clean_nick, 24);
-  end if;
-  if clean_color not in ('sky','gold','mint','rose','lilac','peach') then
-    clean_color := 'sky';
-  end if;
+  if char_length(clean_body) = 0 then raise exception 'Post cannot be empty.'; end if;
+  if char_length(clean_body) > 500 then raise exception 'Post is too long (max 500 characters).'; end if;
+  if clean_nick is not null and char_length(clean_nick) > 24 then clean_nick := left(clean_nick, 24); end if;
+  if clean_color not in ('sky','gold','mint','rose','lilac','peach') then clean_color := 'sky'; end if;
+  if clean_cat not in ('confession','crush','rant','question','funny','lostfound','tip') then clean_cat := 'confession'; end if;
 
-  insert into public.posts (body, nickname, color, status)
-  values (clean_body, clean_nick, clean_color, 'visible')   -- change 'visible' to 'pending' to hold posts for admin approval (pre-moderation)
+  insert into public.posts (body, nickname, color, status, category)
+  values (clean_body, clean_nick, clean_color, 'visible', clean_cat)  -- change 'visible' to 'pending' for pre-moderation
   returning * into rec;
-
   return rec;
 end;
 $$;
 
 -- reactions were removed from the wall; drop the old reaction function if present
 drop function if exists public.react_to_post(uuid, text, integer);
+
+-- Like / unlike a post (delta clamped to +/-1; count never drops below 0).
+create or replace function public.like_post(p_post_id uuid, p_delta integer default 1)
+returns public.posts
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  rec public.posts;
+  d   integer := case when p_delta < 0 then -1 else 1 end;
+  cur integer;
+begin
+  select like_count into cur from public.posts where id = p_post_id and status = 'visible' for update;
+  if not found then raise exception 'Post not found.'; end if;
+  update public.posts set like_count = greatest(0, cur + d) where id = p_post_id returning * into rec;
+  return rec;
+end;
+$$;
 
 -- Report a post. Reports are QUEUE-ONLY: reporting never changes a post's
 -- visibility on its own, so no single anonymous user can hide someone else's
@@ -544,8 +562,9 @@ create policy admin_apps_admin_read on public.admin_applications
 -- ----------------------------------------------------------------------------
 --  GRANTS  (who may call each function)
 -- ----------------------------------------------------------------------------
-grant execute on function public.create_post(text, text, text)      to anon, authenticated;
-grant execute on function public.report_post(uuid, text, text)      to anon, authenticated;
+grant execute on function public.create_post(text, text, text, text) to anon, authenticated;
+grant execute on function public.like_post(uuid, integer)            to anon, authenticated;
+grant execute on function public.report_post(uuid, text, text)       to anon, authenticated;
 grant execute on function public.is_admin()                         to anon, authenticated;
 grant execute on function public.claim_admin()                      to authenticated;
 grant execute on function public.add_admin(text)                    to authenticated;

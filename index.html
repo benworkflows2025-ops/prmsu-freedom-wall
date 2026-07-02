@@ -2,33 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>PRMSU Freedom Wall · Say it anonymously</title>
-<meta name="description" content="An anonymous freedom wall for PRMSU students (Ramonians). Share a thought, a confession, an appreciation, or a rant. Post with no account, and keep it kind.">
-<meta name="theme-color" content="#103A8A">
+<meta name="description" content="An anonymous freedom wall for PRMSU students (Ramonians). Post a confession, crush, rant, question, or campus tip. No names. Stay kind.">
+<meta name="theme-color" content="#3B6FE3">
 <link rel="icon" type="image/png" href="seal.png">
 <link rel="apple-touch-icon" href="seal.png">
 
-<!-- Social share preview.
-     NOTE: og:image needs an ABSOLUTE url. If your Netlify subdomain is not
-     prmsu-freedom-wall.netlify.app, replace that host in the tags below. -->
+<!-- Social share preview. Update the host if your Netlify subdomain differs. -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="PRMSU Freedom Wall">
 <meta property="og:url" content="https://prmsu-freedom-wall.netlify.app/">
 <meta property="og:title" content="PRMSU Freedom Wall · Say it anonymously">
-<meta property="og:description" content="An anonymous freedom wall for PRMSU students (Ramonians). Post a thought, confession, question, or shoutout. Keep it kind.">
+<meta property="og:description" content="An anonymous freedom wall for PRMSU students (Ramonians). Post, comment, and keep it kind.">
 <meta property="og:image" content="https://prmsu-freedom-wall.netlify.app/og.png">
 <meta property="og:image:secure_url" content="https://prmsu-freedom-wall.netlify.app/og.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="PRMSU Freedom Wall - say it anonymously">
-<!-- 1:1 variant for chat apps that prefer a square preview -->
+<meta property="og:image:alt" content="PRMSU Freedom Wall">
 <meta property="og:image" content="https://prmsu-freedom-wall.netlify.app/og-square.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="1200">
-<meta property="og:image:alt" content="PRMSU Freedom Wall">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="PRMSU Freedom Wall · Say it anonymously">
 <meta name="twitter:description" content="Say it anonymously. A freedom wall for PRMSU students (Ramonians).">
@@ -36,93 +32,154 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ================= NAV ================= -->
-  <header class="nav">
-    <div class="nav-in">
-      <div class="brand">
-        <a href="index.html">
-          <img id="navSeal" src="seal.png" alt="PRMSU">
-          <div>
-            <div class="brand-t">PRMSU Freedom Wall</div>
-            <div class="brand-s">Say it anonymously · be kind</div>
-          </div>
-        </a>
-      </div>
-      <nav class="nav-links">
-        <a href="https://prmsu.edu.ph/" target="_blank" rel="noopener">PRMSU Website
-          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
-        <a class="nav-admin" href="apply.html">Apply to moderate</a>
+  <!-- ================= APP BAR ================= -->
+  <header class="appbar">
+    <div class="appbar-in">
+      <a class="brand2" href="index.html">
+        <img src="seal.png" alt="PRMSU">
+        <div>
+          <div class="brand2-t">PRMSU Freedom Wall</div>
+          <div class="brand2-s">Unofficial student wall</div>
+        </div>
+      </a>
+      <nav class="appbar-links">
+        <a href="#wall" data-scroll>Wall</a>
+        <a href="terms.html">Rules</a>
+        <a href="privacy.html">Privacy</a>
+        <a class="cta" href="apply.html">Apply to moderate</a>
       </nav>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+      </button>
     </div>
   </header>
 
-  <!-- demo-mode banner (shown only when Supabase isn't configured) -->
-  <div id="demoBar" class="demo-bar hidden">
+  <!-- mobile slide-down menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <div class="mm-scrim" data-close></div>
+    <nav class="mm-panel">
+      <a href="#wall" data-scroll data-close>Wall</a>
+      <a href="terms.html">Community Rules</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="admin.html">Admin</a>
+      <a class="cta" href="apply.html" data-close>Apply to moderate</a>
+    </nav>
+  </div>
+
+  <!-- demo-mode banner (only when Supabase isn't configured) -->
+  <div id="demoBar" class="demo-bar hidden" style="max-width:1160px;margin:12px auto 0;padding:0 16px">
     <div class="demo-bar-in">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div><b>Demo mode.</b> Posts are saved only in this browser and aren't shared with anyone. Add your Supabase keys in <b>config.js</b> to turn this into a real, live wall.</div>
+      <div><b>Demo mode.</b> Posts are saved only in this browser. Add your Supabase keys in <b>config.js</b> to go live.</div>
     </div>
   </div>
 
-  <main class="board">
-    <div class="wrap">
+  <main class="page">
 
-      <section class="hero">
-        <p class="hero-eyebrow">Anonymous · student-run</p>
-        <h1 class="hero-t">The PRMSU <span>Freedom Wall</span></h1>
-        <p class="hero-s">A place to let it out. Post a thought, a confession, a shoutout, or a rant. No name needed. Report anything nasty, and keep it kind. 💙</p>
-        <div class="hero-stat"><span class="live"></span> <b id="userCount">…</b>&nbsp;Ramonians on the wall</div>
-      </section>
+    <!-- ================= WELCOME BANNER ================= -->
+    <section class="welcome" id="wall">
+      <h1>PRMSU Freedom Wall</h1>
+      <p>Post anonymously. Stay kind. No names. 💙</p>
+      <div class="welcome-badges">
+        <span class="badge2"><span class="dot"></span>Anonymous</span>
+        <span class="badge2"><span class="dot"></span>Moderated</span>
+        <span class="badge2"><span class="dot"></span>Student-run</span>
+      </div>
+    </section>
 
-      <!-- ================= COMPOSE ================= -->
-      <section class="compose">
-        <textarea id="body" maxlength="500" placeholder="What's on your mind, Ramonians? Type it here." aria-label="Write your post"></textarea>
-        <div class="compose-tools">
-          <div class="swatches" id="swatches" role="radiogroup" aria-label="Note color">
-            <button type="button" class="swatch sw-sky sel"  data-color="sky"   role="radio" aria-checked="true"  aria-label="Sky"></button>
-            <button type="button" class="swatch sw-gold"     data-color="gold"  role="radio" aria-checked="false" aria-label="Gold"></button>
-            <button type="button" class="swatch sw-mint"     data-color="mint"  role="radio" aria-checked="false" aria-label="Mint"></button>
-            <button type="button" class="swatch sw-rose"     data-color="rose"  role="radio" aria-checked="false" aria-label="Rose"></button>
-            <button type="button" class="swatch sw-lilac"    data-color="lilac" role="radio" aria-checked="false" aria-label="Lilac"></button>
-            <button type="button" class="swatch sw-peach"    data-color="peach" role="radio" aria-checked="false" aria-label="Peach"></button>
+    <div class="layout">
+      <!-- ================= MAIN COLUMN ================= -->
+      <div class="col-main">
+
+        <!-- mobile: tap to open the bottom-sheet composer -->
+        <button class="post-trigger" id="postTrigger">
+          <span class="pt-ava"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+          <span>Ano’ng gusto mong sabihin, Ramonian?</span>
+          <span class="pt-go">Post</span>
+        </button>
+
+        <!-- desktop composer -->
+        <section class="composer" id="composer">
+          <textarea id="body" class="comp-textarea" maxlength="500" placeholder="Ano’ng gusto mong sabihin, Ramonian?" aria-label="Write your post"></textarea>
+          <div class="comp-mid">
+            <div class="cat-label">Category</div>
+            <div class="cat-select" id="catSelect" role="group" aria-label="Post category"></div>
           </div>
-          <input id="nick" class="nick" type="text" maxlength="24" placeholder="Nickname (optional)" aria-label="Optional nickname">
-          <div class="compose-right">
+          <div id="composeWarn" class="comp-warn hidden"></div>
+          <div class="comp-foot">
+            <span class="comp-reminder">No names, sections, student numbers, or private info.</span>
             <span class="counter" id="counter">500</span>
-            <button class="btn" id="postBtn">Post to wall
+            <button class="btn" id="postBtn">Post anonymously
               <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
           </div>
-        </div>
-        <div id="composeErr" class="err hidden"></div>
-      </section>
+        </section>
 
-      <!-- ================= FEED ================= -->
-      <div class="feed-head">
-        <h2>On the wall <span class="cnt" id="count"></span></h2>
-        <button class="refresh" id="refreshBtn" aria-label="Refresh the wall">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Refresh
-        </button>
+        <!-- controls -->
+        <div class="controls">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search" type="search" placeholder="Search posts…" aria-label="Search posts">
+          </div>
+          <div class="chips" id="filterChips" role="group" aria-label="Filter by category"></div>
+          <div class="sortrow">
+            <div class="sortseg" id="sortSeg" role="group" aria-label="Sort posts"></div>
+            <span class="feed-count" id="count"></span>
+          </div>
+        </div>
+
+        <!-- feed -->
+        <div id="feed" class="feed"></div>
+        <div class="load-more" id="loadMoreWrap" style="display:none">
+          <button class="btn ghost" id="loadMore">Load more posts</button>
+        </div>
       </div>
 
-      <div id="feed" class="grid"></div>
-
+      <!-- ================= SIDEBAR ================= -->
+      <aside class="col-side">
+        <div class="side-card">
+          <h3 class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>House rules</h3>
+          <ul class="rule-list">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No real names, sections, or student numbers</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No bullying, no hate</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>No private info or doxxing</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Posts may be moderated</li>
+          </ul>
+        </div>
+        <div class="side-card">
+          <h3 class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-1 .3-2 .8-2.8"/><path d="M12 22a7 7 0 0 0 7-7c0-3-2-5-3-7 0 2-1.5 3-3 3 .5-3-1-5-3-6 .3 3-2 4.5-2 8a4 4 0 0 0 4 9z"/></svg>Trending now</h3>
+          <div class="trend-list" id="trendList"></div>
+        </div>
+        <div class="side-card">
+          <h3 class="side-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Keep it kind</h3>
+          <p class="disclaimer">This wall is moderated by student volunteers. Be nice, stay anonymous, and look out for each other. No names, no hate. 💙</p>
+        </div>
+        <div class="side-card">
+          <p class="disclaimer"><b>Unofficial student-made platform.</b> Not affiliated with PRMSU. Made by students, for students.</p>
+          <a class="btn ghost block" href="apply.html" style="margin-top:12px">Apply as moderator</a>
+        </div>
+      </aside>
     </div>
   </main>
 
+  <!-- floating post button (mobile) -->
+  <button class="fab" id="fab" aria-label="Post anonymously">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+    Post
+  </button>
+
   <footer class="foot">
     <div class="foot-links">
-      <a href="https://prmsu.edu.ph/" target="_blank" rel="noopener">PRMSU Website</a>
+      <a href="terms.html">Community Rules</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="apply.html">Apply to moderate</a>
       <a href="admin.html">Admin</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Community Rules &amp; Terms</a>
     </div>
-    <div class="foot-note">Built for PRMSU students · Anonymous, but not a place for harassment · Not an official university tool.</div>
+    <div class="foot-note">Unofficial student-made platform · Not affiliated with PRMSU · This wall is moderated.</div>
     <div class="foot-credit">Created by Red Pogi Lang.</div>
     <div class="foot-meta" id="footMeta"></div>
   </footer>

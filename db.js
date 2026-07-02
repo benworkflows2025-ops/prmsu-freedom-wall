@@ -80,21 +80,34 @@ export const DB = {
     return data || [];
   },
 
-  async createPost({ body, nickname, color }) {
+  async createPost({ body, nickname, color, category }) {
     if (!CONFIGURED) {
       const list = demo.read(DEMO_POSTS);
       const row = {
         id: crypto.randomUUID(), body: String(body).trim(),
         nickname: (nickname || '').trim() || null, color: color || 'sky',
-        status: 'visible', report_count: 0, created_at: new Date().toISOString(),
+        category: category || 'confession', status: 'visible',
+        report_count: 0, like_count: 0, comment_count: 0, created_at: new Date().toISOString(),
       };
       list.push(row); demo.write(DEMO_POSTS, list);
       return row;
     }
     const { data, error } = await supa.rpc('create_post', {
-      p_body: body, p_nickname: nickname || null, p_color: color || 'sky',
+      p_body: body, p_nickname: nickname || null, p_color: color || 'sky', p_category: category || 'confession',
     });
     if (error) boom(error, 'Could not post.');
+    return data;
+  },
+
+  async likePost(postId, delta = 1) {
+    if (!CONFIGURED) {
+      const list = demo.read(DEMO_POSTS);
+      const p = list.find((x) => x.id === postId);
+      if (p) { p.like_count = Math.max(0, (p.like_count || 0) + (delta < 0 ? -1 : 1)); demo.write(DEMO_POSTS, list); }
+      return p;
+    }
+    const { data, error } = await supa.rpc('like_post', { p_post_id: postId, p_delta: delta < 0 ? -1 : 1 });
+    if (error) boom(error, 'Could not like.');
     return data;
   },
 
