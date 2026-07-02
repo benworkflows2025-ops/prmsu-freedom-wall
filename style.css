@@ -503,7 +503,7 @@ body.sheet-open{overflow:hidden}
 .legal ul{margin:0 0 12px;padding-left:20px}.legal li{margin-bottom:6px}.legal a{color:var(--blue)}
 
 /* live "online now" indicator on the welcome banner */
-.live-online{position:relative;z-index:1;margin-bottom:11px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px}
+.live-online{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px}
 .live-online b{font-weight:800}
 .live-dot{width:8px;height:8px;border-radius:50%;background:#39e08a;animation:livepulse2 2.2s infinite}
 @keyframes livepulse2{0%{box-shadow:0 0 0 0 rgba(57,224,138,.55)}70%{box-shadow:0 0 0 7px rgba(57,224,138,0)}100%{box-shadow:0 0 0 0 rgba(57,224,138,0)}}
