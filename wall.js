@@ -76,8 +76,8 @@ function ago(iso) {
 
 /* ---------------- content safety check ---------------- */
 function contentIssue(text) {
-  if (FILTER.contains(text)) return 'Let’s keep it kind — please remove the offensive words.';
-  if (/(^|\D)09\d{2}[\s-]?\d{3}[\s-]?\d{4}(\D|$)/.test(text) || /\b\d{8,}\b/.test(text)) return 'Please remove phone or student numbers — keep it anonymous.';
+  if (FILTER.contains(text)) return 'Let’s keep it kind - please remove the offensive words.';
+  if (/(^|\D)09\d{2}[\s-]?\d{3}[\s-]?\d{4}(\D|$)/.test(text) || /\b\d{8,}\b/.test(text)) return 'Please remove phone or student numbers - keep it anonymous.';
   return null;
 }
 
@@ -289,11 +289,11 @@ async function doPost(body, category, onDone) {
   if (state.paused) throw new Error('The wall is paused by an admin right now. Please try again later.');
   const issue = contentIssue(body);
   if (!body.trim()) throw new Error('Write something first 🙂');
-  if (body.length > POST_MAX) throw new Error('Sobrang haba — keep it under ' + POST_MAX + ' characters.');
+  if (body.length > POST_MAX) throw new Error('Sobrang haba - keep it under ' + POST_MAX + ' characters.');
   if (issue) throw new Error(issue);
   const last = Number(localStorage.getItem('prmsu_wall_last') || 0);
   const wait = Math.ceil((COOLDOWN - (Date.now() - last)) / 1000);
-  if (last && wait > 0) throw new Error('Sandali lang — wait ' + wait + 's before posting again.');
+  if (last && wait > 0) throw new Error('Sandali lang - wait ' + wait + 's before posting again.');
   const row = await DB.createPost({ body: body.trim(), nickname: getHandle(), color: 'sky', category });
   localStorage.setItem('prmsu_wall_last', String(Date.now()));
   if (row && row.id) { row.like_count = row.like_count || 0; row.comment_count = row.comment_count || 0; upsertPost(row, true); }
