@@ -350,8 +350,12 @@ function buildAppCard(app) {
       if (!ok) return;
       try {
         await DB.approveApplication(app);
-        try { await DB.notifyApproved(app.email, app.full_name); toast('Approved + emailed them. Photos deleted.', 'ok'); }
-        catch (e) { toast('Approved. Photos deleted. (Email not sent yet.)', 'ok'); }
+        try {
+          const r = await DB.notifyApproved(app.email, app.full_name);
+          if (r && r.already) toast('Approved. They already have an account, so they can just sign in.', 'ok');
+          else toast('Approved + invite email sent. Photos deleted.', 'ok');
+        }
+        catch (e) { toast('Approved. Photos deleted. (Invite email not sent - see notes.)', 'ok'); }
         loadDash();
       } catch (err) { toast(err.message || 'Could not approve.', 'err'); }
     };
