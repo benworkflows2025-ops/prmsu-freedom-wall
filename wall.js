@@ -264,7 +264,7 @@ async function doPost(body, category, onDone) {
   if (last && wait > 0) throw new Error('Sandali lang — wait ' + wait + 's before posting again.');
   const row = await DB.createPost({ body: body.trim(), nickname: getHandle(), color: 'sky', category });
   localStorage.setItem('prmsu_wall_last', String(Date.now()));
-  if (row && row.id) { row.like_count = row.like_count || 0; row.comment_count = row.comment_count || 0; upsertPost(row, true); buildTrending(); }
+  if (row && row.id) { row.like_count = row.like_count || 0; row.comment_count = row.comment_count || 0; upsertPost(row, true); }
   if (onDone) onDone();
 }
 
@@ -338,11 +338,11 @@ function patchCard(post) {
 }
 function upsertPost(post, prepend) {
   if (!post || (post.status && post.status !== 'visible') || state.dismissed.has(post.id)) return;
-  if (state.map.has(post.id)) { Object.assign(state.map.get(post.id), post); patchCard(state.map.get(post.id)); buildTrending(); return; }
+  if (state.map.has(post.id)) { Object.assign(state.map.get(post.id), post); patchCard(state.map.get(post.id)); return; }
   state.map.set(post.id, post);
   if (prepend) state.posts.unshift(post); else state.posts.push(post);
   render();}
-function removePost(id) { if (!state.map.has(id)) return; state.map.delete(id); state.posts = state.posts.filter((p) => p.id !== id); render(); buildTrending(); }
+function removePost(id) { if (!state.map.has(id)) return; state.map.delete(id); state.posts = state.posts.filter((p) => p.id !== id); render(); }
 function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 
 /* ---------------- load + realtime ---------------- */
@@ -352,7 +352,7 @@ async function load(silent) {
     const posts = (await DB.fetchPosts(400)).filter((p) => !state.dismissed.has(p.id));
     state.posts = posts; state.map = new Map(posts.map((p) => [p.id, p]));
   } catch (err) { if (!silent) toast(err.message || 'Something went wrong. Try refreshing.', 'err'); }
-  finally { state.loading = false; render(); buildTrending(); }
+  finally { state.loading = false; render(); }
 }
 function wireRealtime() {
   DB.subscribe({
