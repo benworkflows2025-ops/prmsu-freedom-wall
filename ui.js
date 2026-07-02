@@ -89,11 +89,32 @@ export function openSheet(build) {
     sheet.appendChild(el('div', 'sheet-handle'));
     overlay.appendChild(sheet);
 
+    // Keep the whole sheet - including its pinned action button - inside the
+    // area the on-screen keyboard actually leaves visible. vh / dvh ignore the
+    // keyboard, so on a phone the footer would sit behind it and the fields
+    // would need scrolling. visualViewport reports the real visible box, so we
+    // pin the overlay to it and cap the sheet's height to match.
+    const vv = window.visualViewport;
+    const fit = () => {
+      if (!vv) return;
+      overlay.style.top = vv.offsetTop + 'px';
+      overlay.style.bottom = 'auto';
+      overlay.style.height = vv.height + 'px';
+      sheet.style.maxHeight = Math.round(vv.height - 8) + 'px';
+    };
+    if (vv) { vv.addEventListener('resize', fit); vv.addEventListener('scroll', fit); }
+    document.body.classList.add('sheet-open');
+    // the keyboard animates in a beat after focus - refit a few times to catch it
+    const refits = [100, 250, 450, 700].map((ms) => setTimeout(fit, ms));
+
     let done = false;
     const close = (result) => {
       if (done) return;
       done = true;
       document.removeEventListener('keydown', onKey, true);
+      if (vv) { vv.removeEventListener('resize', fit); vv.removeEventListener('scroll', fit); }
+      refits.forEach(clearTimeout);
+      document.body.classList.remove('sheet-open');
       overlay.classList.remove('show');
       setTimeout(() => { overlay.remove(); if (prev && prev.focus) prev.focus(); }, 300);
       resolve(result === undefined ? null : result);
@@ -107,7 +128,7 @@ export function openSheet(build) {
 
     build(close, sheet);
     document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add('show'));
+    requestAnimationFrame(() => { overlay.classList.add('show'); fit(); });
     const first = sheet.querySelector('[data-autofocus]') || sheet.querySelector('textarea, input, button');
     if (first) first.focus();
   });

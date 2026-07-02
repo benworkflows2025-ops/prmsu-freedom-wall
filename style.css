@@ -111,7 +111,7 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
   animation:rise .5s var(--ease) both}
 .welcome::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
-.welcome h1{font-size:23px;font-weight:800;margin:0;line-height:1.1}
+.welcome h1{font-size:23px;font-weight:800;margin:0;line-height:1.1;position:relative;z-index:1}
 .welcome p{margin:5px 0 0;font-size:14px;color:rgba(255,255,255,.9);font-weight:500}
 .welcome-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
 .badge2{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);
@@ -269,15 +269,18 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .sheet-overlay.show{opacity:1}
 .sheet{width:100%;max-width:560px;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -20px 50px -20px rgba(27,37,64,.5);
   padding:8px 18px calc(16px + var(--sab));transform:translateY(100%);transition:transform var(--dur) var(--ease);
-  max-height:92vh;display:flex;flex-direction:column}
+  max-height:92vh;max-height:90dvh;display:flex;flex-direction:column}
+/* lock the wall behind the sheet so only the sheet scrolls */
+body.sheet-open{overflow:hidden}
 .sheet-overlay.show .sheet{transform:translateY(0)}
 .sheet-handle{width:42px;height:5px;border-radius:999px;background:#D7DCE8;margin:6px auto 4px}
 .sheet-head{display:flex;align-items:center;gap:10px;padding:4px 0 10px}
 .sheet-head h3{font-size:18px;font-weight:800;margin:0}
 .sheet-x{margin-left:auto;border:0;background:var(--bg2);color:var(--muted);width:36px;height:36px;border-radius:50%;
   font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1 1 auto}
-.sheet-body .comp-textarea{min-height:120px;font-size:16px}
+.sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1 1 auto;min-height:0}
+.sheet-body .comp-textarea{min-height:88px;font-size:16px}
+@media (max-height:560px){.sheet-body .comp-textarea{min-height:60px}}
 .sheet-foot{padding-top:12px;margin-top:8px;border-top:1px solid var(--line2)}
 .sheet-foot .btn{width:100%}
 
@@ -500,11 +503,11 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .legal ul{margin:0 0 12px;padding-left:20px}.legal li{margin-bottom:6px}.legal a{color:var(--blue)}
 
 /* live "online now" indicator on the welcome banner */
-.live-online{position:absolute;top:14px;right:16px;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px}
+.live-online{position:relative;z-index:1;margin-bottom:11px;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px}
 .live-online b{font-weight:800}
 .live-dot{width:8px;height:8px;border-radius:50%;background:#39e08a;animation:livepulse2 2.2s infinite}
 @keyframes livepulse2{0%{box-shadow:0 0 0 0 rgba(57,224,138,.55)}70%{box-shadow:0 0 0 7px rgba(57,224,138,0)}100%{box-shadow:0 0 0 0 rgba(57,224,138,0)}}
-@media (max-width:520px){.live-online{top:12px;right:12px;font-size:11.5px;padding:5px 10px}}
+@media (max-width:520px){.live-online{font-size:11.5px;padding:5px 10px}}
 
 /* paused-wall bar (public) + admin banner */
 .pause-bar{display:flex;gap:11px;align-items:flex-start;background:#FFF1E6;border:1px solid #F6C89B;color:#7a4712;border-radius:14px;padding:12px 14px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
