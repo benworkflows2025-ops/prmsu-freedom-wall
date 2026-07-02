@@ -327,7 +327,7 @@ function buildAppImage(app, which, label) {
 async function renderAdmins(container) {
   container.textContent = '';
   const box = el('div', 'admins-box');
-  box.appendChild(el('h3', null, 'Administrators'));
+  box.appendChild(el('h3', null, 'Moderators'));
   const ul = el('ul', 'admins-list');
   box.appendChild(ul);
   try {
@@ -339,9 +339,35 @@ async function renderAdmins(container) {
       li.appendChild(el('span', null, maskEmail(a.email) + (isYou ? '  (you)' : '')));
       ul.appendChild(li);
     });
-    if (!admins.length) ul.appendChild(el('li', null, 'No admins found.'));
-  } catch (err) { ul.appendChild(el('li', null, err.message || 'Could not load admins.')); }
-  box.appendChild(el('p', 'admins-note', 'Emails are masked so a screenshot of this panel never reveals who the admins are. Approve new moderators from the Applications tab.'));
+    if (!admins.length) ul.appendChild(el('li', null, 'No moderators yet.'));
+  } catch (err) { ul.appendChild(el('li', null, err.message || 'Could not load moderators.')); }
+
+  // add a moderator directly by email (no application needed)
+  box.appendChild(el('div', 'admins-sub', 'Add a moderator by email'));
+  const form = el('div', 'add-admin');
+  const input = el('input');
+  input.type = 'email';
+  input.placeholder = 'new-moderator@email.com';
+  const addBtn = el('button', 'btn small', 'Add moderator');
+  const submit = async () => {
+    const email = input.value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email.', 'err'); return; }
+    addBtn.disabled = true;
+    try {
+      await DB.addAdmin(email);
+      toast('Added. They can moderate once they sign in with that email.', 'ok');
+      input.value = '';
+      renderAdmins(container);
+    } catch (err) { toast(err.message || 'Could not add moderator.', 'err'); }
+    finally { addBtn.disabled = false; }
+  };
+  addBtn.onclick = submit;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  form.appendChild(input);
+  form.appendChild(addBtn);
+  box.appendChild(form);
+
+  box.appendChild(el('p', 'admins-note', 'A moderator can review, hide, and delete posts, comments, and applications, just like you. They get access after creating an account on the sign-in page using the exact email you add here. Emails are masked so a screenshot never reveals who the moderators are. (You can also approve them from the Applications tab.)'));
   container.appendChild(box);
 }
 

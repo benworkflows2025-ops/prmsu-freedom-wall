@@ -283,6 +283,11 @@ export const DB = {
     if (error) boom(error, 'Could not load admins.');
     return data || [];
   },
+  async addAdmin(email) {
+    if (!CONFIGURED) return;
+    const { error } = await supa.rpc('add_admin', { p_email: email });
+    if (error) boom(error, 'Could not add admin.');
+  },
 
   /* ---------------- admin moderation ---------------- */
   async adminFetchPosts(status) {
