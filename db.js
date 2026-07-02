@@ -252,6 +252,14 @@ export const DB = {
   },
 
   /* ---------------- admin auth ---------------- */
+  // Only approved people (already in the admins table) may create an account -
+  // account creation is not open to everyone. Returns true if this email is allowed.
+  async emailCanSignup(email) {
+    if (!CONFIGURED) return true; // demo mode: no backend to gate against
+    const { data, error } = await supa.rpc('email_can_signup', { p_email: email });
+    if (error) boom(error, 'Could not check this email.');
+    return !!data;
+  },
   async signUp(email, password) {
     if (!CONFIGURED) { localStorage.setItem(DEMO_ADMIN, '1'); return { demo: true }; }
     const { data, error } = await supa.auth.signUp({ email, password });

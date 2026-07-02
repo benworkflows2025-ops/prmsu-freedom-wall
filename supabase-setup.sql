@@ -238,6 +238,24 @@ begin
 end;
 $$;
 
+-- Gate the admin sign-up form. Creating an account is NOT open to everyone:
+-- only people the owner has already approved (i.e. whose email is in
+-- public.admins - approved moderators, added admins, and the seeded owner) may
+-- create an account. Everyone else must apply to moderate first. Returns true
+-- when the given email is allowed to sign up.
+create or replace function public.email_can_signup(p_email text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.admins
+    where email = lower(btrim(coalesce(p_email, '')))
+  );
+$$;
+
 -- Role helpers ------------------------------------------------------
 create or replace function public.my_role()
 returns text language sql stable security definer set search_path = public as $$
@@ -625,6 +643,7 @@ grant execute on function public.like_post(uuid, integer)            to anon, au
 grant execute on function public.report_post(uuid, text, text)       to anon, authenticated;
 grant execute on function public.is_admin()                         to anon, authenticated;
 grant execute on function public.claim_admin()                      to authenticated;
+grant execute on function public.email_can_signup(text)             to anon, authenticated;
 grant execute on function public.add_admin(text, text)              to authenticated;
 grant execute on function public.my_role()                          to anon, authenticated;
 grant execute on function public.is_owner()                         to anon, authenticated;
@@ -652,6 +671,9 @@ begin
     when undefined_object then null;   -- publication missing (older projects)
   end;
 end $$;
+
+-- Make PostgREST pick up any newly added functions right away.
+notify pgrst, 'reload schema';
 
 -- ============================================================================
 --  Done. Now open config.js and paste your Project URL + anon key.

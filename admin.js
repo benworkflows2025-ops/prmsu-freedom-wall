@@ -75,7 +75,10 @@ async function togglePause() {
 let authMode = 'signin';
 function setAuthMode(mode) {
   authMode = mode;
-  $('loginTitle').textContent = mode === 'signin' ? 'Admin sign in' : 'Create an admin account';
+  $('loginTitle').textContent = mode === 'signin' ? 'Admin sign in' : 'Create your account';
+  $('loginSub').textContent = mode === 'signin'
+    ? 'Sign in to moderate the wall. This area is only for administrators.'
+    : 'Account creation is only for people already approved to moderate. Not approved yet? Apply to moderate first.';
   $('authBtn').textContent = mode === 'signin' ? 'Sign in' : 'Create account';
   $('password').setAttribute('autocomplete', mode === 'signin' ? 'current-password' : 'new-password');
   $('switchLine').textContent = '';
@@ -100,8 +103,15 @@ async function doAuth() {
   btn.disabled = true;
   try {
     if (authMode === 'signup') {
+      // Creating an account is not open to everyone - only approved people
+      // (owner + approved moderators) can. Everyone else applies to moderate.
+      const allowed = await DB.emailCanSignup(email);
+      if (!allowed) {
+        loginMsg('This email is not approved yet. Only approved moderators can create an account. Want to help? Apply to moderate first.', 'err');
+        return;
+      }
       const data = await DB.signUp(email, password);
-      if (data && data.user && !data.session && DB.mode === 'supabase') {
+      if (data && data.user && !data.session && DB.isConfigured()) {
         setAuthMode('signin');
         loginMsg('Account created. Check your email to confirm, then sign in.', 'ok');
         return;
