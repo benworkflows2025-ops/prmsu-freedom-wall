@@ -56,7 +56,28 @@ async function onNewOwnerMessage() {
 
 /* ---------------- views ---------------- */
 function show(view) {
-  ['viewLogin', 'viewAccess', 'viewDash'].forEach((v) => $(v).classList.toggle('hidden', v !== view));
+  ['viewLogin', 'viewAccess', 'viewDash', 'viewSetPass'].forEach((v) => $(v).classList.toggle('hidden', v !== view));
+}
+
+// Someone arriving from an invite / password-reset link sets their password here.
+function handleInviteLink() {
+  show('viewSetPass');
+  const msg = (text, kind) => { const m = $('setPassMsg'); if (!text) { m.className = 'login-msg hidden'; return; } m.className = 'login-msg ' + (kind || ''); m.textContent = text; };
+  const btn = $('setPassBtn');
+  const submit = async () => {
+    const pw = $('newPass').value;
+    if (!pw || pw.length < 6) { msg('Password must be at least 6 characters.', 'err'); return; }
+    btn.disabled = true;
+    try {
+      await DB.setPassword(pw);
+      // strip the token from the URL so a refresh doesn't re-trigger this view
+      try { history.replaceState(null, '', location.pathname); } catch (e) {}
+      toast('Password set. Welcome aboard!', 'ok');
+      await route();
+    } catch (e) { msg(e.message || 'Could not set your password.', 'err'); btn.disabled = false; }
+  };
+  btn.onclick = submit;
+  $('newPass').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
 }
 async function route() {
   state.user = await DB.currentUser();
@@ -568,6 +589,9 @@ function boot() {
     t.onclick = () => { selectTab(t.dataset.tab); loadDash(); };
   });
 
-  route();
+  // Invite / password-reset links land here with a token; let them set a password.
+  const linkHash = (window.__PRMSU_HASH || '') + (location.hash || '');
+  if (/type=(invite|recovery|signup)/.test(linkHash)) handleInviteLink();
+  else route();
 }
 boot();

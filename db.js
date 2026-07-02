@@ -286,6 +286,12 @@ export const DB = {
     if (!CONFIGURED) { localStorage.removeItem(DEMO_ADMIN); return; }
     await supa.auth.signOut();
   },
+  // used when an invited moderator sets their password from the invite link
+  async setPassword(password) {
+    if (!CONFIGURED) return;
+    const { error } = await supa.auth.updateUser({ password });
+    if (error) boom(error, 'Could not set your password.');
+  },
   async currentUser() {
     if (!CONFIGURED) return demoIsAdmin() ? { email: 'demo-admin@local' } : null;
     const { data } = await supa.auth.getUser();

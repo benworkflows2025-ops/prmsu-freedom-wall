@@ -11,6 +11,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<!-- capture invite/reset token from the URL before the Supabase client clears it -->
+<script>window.__PRMSU_HASH = (location.hash || '') + (location.search || '');</script>
 </head>
 <body>
 
@@ -47,6 +49,20 @@
         <p class="switch" id="switchLine"></p>
         <p class="hint">Want to help moderate? <a href="apply.html">Apply here</a>.</p>
         <p class="hint" id="demoHint"></p>
+      </div>
+    </section>
+
+    <!-- ============ SET PASSWORD (from invite / reset link) ============ -->
+    <section id="viewSetPass" class="hidden">
+      <div class="login">
+        <h1>Set your password</h1>
+        <p class="sub">Welcome! Create a password to finish setting up your moderator account, then you're in.</p>
+        <div id="setPassMsg" class="login-msg hidden"></div>
+        <div class="field">
+          <label for="newPass">New password</label>
+          <input id="newPass" type="password" autocomplete="new-password" placeholder="••••••••">
+        </div>
+        <button class="btn" id="setPassBtn">Save password</button>
       </div>
     </section>
 
