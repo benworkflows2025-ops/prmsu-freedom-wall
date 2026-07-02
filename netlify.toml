@@ -1,13 +1,13 @@
 # The PRMSU Freedom Wall is a static, multi-page site (index / admin / privacy /
-# terms). Everything lives in this folder, so publish the folder as-is.
+# terms / 404). Everything lives in this folder, so publish the folder as-is.
 [build]
   publish = "."
   command = ""
 
-# Send unknown paths to the wall's home page instead of a bare 404.
+# Show the friendly branded 404 page for any unknown path.
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/404.html"
   status = 404
 
 # Security headers. The anon Supabase key is public by design (protected by RLS),

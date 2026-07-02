@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" href="seal.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,76 +18,94 @@
         <img src="seal.png" alt="PRMSU">
         <div>
           <div class="brand2-t">PRMSU Freedom Wall</div>
-          <div class="brand2-s">Privacy Policy</div>
+          <div class="brand2-s">Privacy &amp; safety</div>
         </div>
       </a>
       <a class="back" href="index.html">← Back to the wall</a>
     </div>
   </header>
 
-  <main class="wrap legal">
-    <h1>Privacy Policy</h1>
-    <p class="upd">Last updated: July 2, 2026</p>
+  <main class="doc">
+    <h1 class="doc-title">Privacy Policy</h1>
+    <p class="doc-upd">Last updated: July 2, 2026</p>
+    <p class="doc-intro">We built PRMSU Freedom Wall to let students post anonymously. This page explains what information may be collected and how it's used. We use only what's needed to run the platform.</p>
 
-    <p>The PRMSU Freedom Wall ("the wall") is a free, student-made space where anyone can post short anonymous messages that other people can read. Because a wall is a shared, public place, this is different from a private tool: <b>what you post is stored on a server and shown to everyone</b>. Please read this so you know exactly what happens to what you write.</p>
+    <nav class="doc-nav">
+      <a href="#collect">What we collect</a>
+      <a href="#notask">What we don't ask</a>
+      <a href="#anon">Anonymous posts</a>
+      <a href="#reports">Reports</a>
+      <a href="#storage">Cookies</a>
+      <a href="#safety">Data safety</a>
+      <a href="#removal">Removal</a>
+      <a href="#contact">Contact</a>
+    </nav>
 
-    <h2>1. Posts are public and anonymous</h2>
-    <p>You do not need an account to post. We do not ask for your name, student number, or email. A post is published with either the optional nickname you type or simply "Anonymous". Anything you write in a post is <b>visible to the public</b> and can be read, screenshotted, or shared by anyone.</p>
+    <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><b>Please don't include private details in posts</b> — no real name, student number, section, phone number, address, or anything you wouldn't want public. Once posted, others may have already copied it.</div></div>
 
-    <h2>2. Please don't post personal or sensitive information</h2>
-    <p>Do not include your full name, student number, phone number, address, passwords, or anyone else's private information. Do not post things you would not want seen publicly. Once something is posted publicly, other people may have already copied it even if it is later removed.</p>
+    <section class="doc-card" id="collect">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/><path d="M3 12c0 1.7 4 3 9 3s9-1.3 9-3"/></svg>What we collect</h2>
+      <ul>
+        <li>The <b>text of your post</b>, its category, and note color</li>
+        <li>The <b>date and time</b> it was posted</li>
+        <li>A <b>generated anonymous name</b> (like <code>ramonians-1234567</code>) — not your identity</li>
+        <li>Likes and comments you make</li>
+        <li>If you <b>report</b> a post, that a report was made plus any reason you typed</li>
+        <li>If you <b>apply to moderate</b>: your name, email, and verification photos (see below)</li>
+      </ul>
+      <p>Storage is handled by <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> on our behalf. We don't run ads or tracking cookies to profile you.</p>
+    </section>
 
-    <h2>3. What we store</h2>
-    <ul>
-      <li>The <b>text of your post</b>, your chosen nickname (if any), and the note color.</li>
-      <li>The <b>date and time</b> the post was created.</li>
-      <li>If a post is <b>reported</b>, we store that a report was made and any reason text the reporter typed, so an admin can review it.</li>
-    </ul>
-    <p>We do <b>not</b> knowingly store your IP address, device identifiers, or a profile about you. A short posting cooldown timer is kept only in your own browser. When you report a post, a random one-time id from your browser is sent so the same browser cannot report the same post twice; it is not tied to your identity.</p>
+    <section class="doc-card" id="notask">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>What we don't ask for</h2>
+      <p>We never ask for your school portal password, student number, payment info, full address, or government ID to post. Posting needs no account at all.</p>
+    </section>
 
-    <h2>4. Where it's stored</h2>
-    <p>Posts, reports, and moderator applications are stored using <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a>, a third-party hosting and database provider, on our behalf. The site is hosted on a static web host (such as Netlify). These providers may process standard technical request information (such as an IP address) as part of delivering the site, according to their own privacy policies. Fonts are loaded from Google Fonts.</p>
+    <section class="doc-card" id="anon">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>Anonymous posts</h2>
+      <p>Posts are shown anonymously to the public. However, you're still responsible for what you submit, and harmful or illegal content is your responsibility.</p>
+    </section>
 
-    <h2>5. Moderation</h2>
-    <p>To keep the wall safe, administrators can hide or delete posts, and can read the reports submitted against a post. Reports are queued for an admin to review; a report never automatically hides or deletes anything on its own, and one person cannot take a post down by reporting it repeatedly. A word filter also runs in your browser to discourage offensive language before posting. Moderation is best-effort, and we cannot guarantee that every harmful post is caught or removed quickly.</p>
+    <section class="doc-card" id="reports">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>Reports &amp; moderation</h2>
+      <p>Reports help moderators review posts that may break the rules. One report can't take a post down by itself, and one browser can report a post once.</p>
+    </section>
 
-    <h2>6. Applying to be a moderator (ID and selfie)</h2>
-    <p>Helping to moderate is optional. If you choose to apply, we ask for your full name, an email, a photo of your school ID, and a selfie, so an admin can confirm you are a real Ramonian. We treat this with care:</p>
-    <ul>
-      <li>The ID photo and selfie are uploaded to <b>private storage</b> that only an admin can open. They are never shown on the public wall.</li>
-      <li>They are used <b>only</b> to verify your application.</li>
-      <li>They are <b>permanently deleted</b> the moment your application is approved or rejected. We do not keep your ID or your face after a decision is made.</li>
-      <li>We never sell, share, or use your identity for anything else.</li>
-    </ul>
-    <p>If you are approved, the only thing we keep is the email you sign in with, so the system knows you are a moderator.</p>
+    <section class="doc-card" id="storage">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M2 12h20"/></svg>Cookies &amp; local storage</h2>
+      <p>The wall keeps a few small things only in your own browser (never sent anywhere): your generated anonymous name, which posts you liked, and a short posting cooldown timer. When you report a post, a random one-time id from your browser is sent so the same browser can't report a post twice — it isn't tied to your identity.</p>
+    </section>
 
-    <h2>7. Removing a post</h2>
-    <p>Because posts are anonymous, we usually cannot verify who wrote a given post. If you want a post removed, whether it is yours or one that harms you, use the <b>Report</b> button on that post, or contact the creator. We will remove content that violates our <a href="terms.html">Community Rules</a> at our discretion.</p>
+    <section class="doc-card" id="safety">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>Data safety &amp; moderator applications</h2>
+      <p>If you apply to moderate, we ask for a photo of your school ID and a selfie only to confirm you're a real Ramonian. These are stored privately, visible only to an admin, and <b>permanently deleted the moment your application is approved or rejected</b>. We never sell, share, or reuse them.</p>
+    </section>
 
-    <h2>8. No tracking or ads</h2>
-    <p>The wall does not run advertising and does not use analytics or tracking cookies to build a profile of you.</p>
+    <section class="doc-card" id="removal">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>When content may be removed</h2>
+      <p>Content that breaks our <a href="terms.html">Community Rules</a> may be hidden or deleted at our discretion. Because posts are anonymous we usually can't verify who wrote one — if you want something removed, use the <b>Report</b> button on that post or contact the creator.</p>
+    </section>
 
-    <h2>9. Children and students</h2>
-    <p>This is a space intended for the PRMSU community. Post responsibly and follow the law and university conduct rules.</p>
+    <section class="doc-card" id="contact">
+      <h2><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>Contact</h2>
+      <p>Questions, or a request to remove something, can be directed to the creator, Red Pogi Lang. Interested in helping? <a href="apply.html">Apply to moderate</a>.</p>
+    </section>
 
-    <h2>10. Not affiliated with PRMSU</h2>
-    <p>This is an independent, unofficial project. It is not operated, endorsed, or affiliated with President Ramon Magsaysay State University. The university seal is used only to identify the school community the wall is made for.</p>
+    <section class="doc-card" id="disclaimer">
+      <div class="callout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div><b>Unofficial student-made platform.</b> Not affiliated with PRMSU. This policy may change; updates appear here with a new date.</div></div>
+    </section>
 
-    <h2>11. Changes</h2>
-    <p>This policy may be updated from time to time. Any changes will appear on this page with a new "last updated" date.</p>
-
-    <h2>12. Contact</h2>
-    <p>Questions, or a request to remove something, can be directed to the creator, Red Pogi Lang.</p>
+    <div class="doc-cta"><a class="btn" href="index.html">← Back to the wall</a></div>
   </main>
 
   <footer class="foot">
     <div class="foot-links">
-      <a href="https://prmsu.edu.ph/" target="_blank" rel="noopener">PRMSU Website</a>
       <a href="index.html">Back to the wall</a>
       <a href="privacy.html">Privacy Policy</a>
       <a href="terms.html">Community Rules &amp; Terms</a>
+      <a href="apply.html">Apply to moderate</a>
     </div>
-    <div class="foot-note">Built for PRMSU students · Anonymous, but not a place for harassment · Not an official university tool.</div>
+    <div class="foot-note">Unofficial student-made platform · Not affiliated with PRMSU.</div>
     <div class="foot-credit">Created by Red Pogi Lang.</div>
     <div class="foot-meta">Version 1.0.0 · Last updated July 2, 2026</div>
   </footer>
