@@ -263,6 +263,46 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .fab:active{transform:scale(.94)}
 .fab svg{width:20px;height:20px}
 
+/* floating "message the owner" button (bottom-right, secondary style) */
+.owner-fab{position:fixed;right:16px;bottom:calc(16px + var(--sab));z-index:41;display:inline-flex;align-items:center;gap:8px;
+  background:#fff;color:var(--blue);border:1.5px solid var(--line);border-radius:999px;font:inherit;font-weight:700;font-size:14px;
+  height:48px;padding:0 16px;box-shadow:0 10px 24px -10px rgba(27,37,64,.4);cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .14s var(--ease),background .15s,border-color .15s}
+.owner-fab svg{width:19px;height:19px;flex:0 0 auto}
+.owner-fab:hover{background:#F1F5FE;border-color:#CBD7EE}
+.owner-fab:active{transform:scale(.95)}
+.owner-fab.has-unread::after{content:"";position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;background:#EC4E86;border:2px solid var(--bg);box-shadow:0 0 0 1px #EC4E86}
+/* on mobile the Post button sits in the corner, so lift Message-owner above it */
+@media (max-width:859px){.owner-fab{bottom:calc(82px + var(--sab))}}
+@media (max-width:479px){.owner-fab span{display:none}.owner-fab{padding:0;width:48px;justify-content:center}}
+
+/* ---- owner chat: bubbles, input, thread list ---- */
+.chat-head-txt h3{font-size:17px;font-weight:800;margin:0}
+.chat-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.chat-body{flex:1 1 auto;min-height:120px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:8px;padding:10px 2px}
+.chat-empty{margin:auto;text-align:center;color:var(--muted);font-size:14px;line-height:1.5;max-width:290px;padding:22px 8px}
+.bubble{max-width:80%;padding:9px 13px;border-radius:16px;font-size:15px;line-height:1.45;word-break:break-word}
+.bubble-body{white-space:pre-wrap}
+.bubble-time{font-size:10.5px;margin-top:3px;opacity:.75}
+.bubble.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:5px}
+.bubble.them{align-self:flex-start;background:var(--bg2);color:var(--ink);border-bottom-left-radius:5px}
+.bubble.me .bubble-time{color:#fff}
+.bubble.them .bubble-time{color:var(--muted)}
+.chat-input{display:flex;align-items:flex-end;gap:8px;padding-top:10px;border-top:1px solid var(--line2)}
+.chat-input textarea{flex:1 1 auto;resize:none;font:inherit;font-size:16px;line-height:1.4;max-height:110px;padding:10px 14px;border:1px solid var(--line);border-radius:20px;background:var(--bg)}
+.chat-input textarea:focus{outline:none;border-color:var(--blue)}
+.chat-send{flex:0 0 auto;width:44px;height:44px;border:0;border-radius:50%;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s var(--ease)}
+.chat-send:active{transform:scale(.92)}
+.chat-send svg{width:20px;height:20px}
+/* admin conversation view */
+.conv-bar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.admin-chat{max-height:min(52vh,460px);border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;margin-bottom:12px}
+.thread-card{cursor:pointer;transition:transform .12s var(--ease),box-shadow .15s}
+.thread-card:hover{box-shadow:0 6px 18px -10px rgba(27,37,64,.35)}
+.thread-card:active{transform:scale(.99)}
+.thread-prev{margin-top:8px;font-size:14px;color:var(--ink);line-height:1.4}
+.thread-who{font-weight:700;color:var(--muted)}
+
 /* =========================================================================
    BOTTOM SHEET (mobile composer)
    ========================================================================= */

@@ -30,6 +30,7 @@ const APPS_BUCKET = 'admin-apps';
 const DEMO_POSTS = 'prmsu_wall_demo_posts';
 const DEMO_APPS = 'prmsu_wall_demo_apps';
 const DEMO_ADMIN = 'prmsu_wall_demo_admin';
+const DEMO_MSGS = 'prmsu_wall_demo_owner_msgs';
 
 const demo = {
   read(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch { return []; } },
@@ -333,6 +334,74 @@ export const DB = {
     if (!CONFIGURED) { localStorage.setItem('prmsu_wall_demo_paused', v ? '1' : '0'); return; }
     const { error } = await supa.rpc('set_paused', { p_paused: !!v });
     if (error) boom(error, 'Could not update.');
+  },
+
+  /* ---------------- owner chat (two-way: visitor <-> owner) ---------------- */
+  // Each browser keeps one random "thread" token; it groups this visitor's
+  // private conversation with the owner.
+  ownerThreadToken() {
+    try {
+      let t = localStorage.getItem('prmsu_owner_thread');
+      if (!t) { t = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)); localStorage.setItem('prmsu_owner_thread', t); }
+      return t;
+    } catch { return 'anon'; }
+  },
+  // visitor sends a message in their own thread
+  async sendOwnerMessage(body, contact) {
+    const thread = this.ownerThreadToken();
+    if (!CONFIGURED) {
+      const list = demo.read(DEMO_MSGS);
+      list.push({ id: crypto.randomUUID(), thread, sender: 'visitor', body: String(body || '').trim(), contact: (contact || '').trim() || null, created_at: new Date().toISOString(), read_by_owner: false });
+      demo.write(DEMO_MSGS, list); return;
+    }
+    const { error } = await supa.rpc('send_owner_message', { p_thread: thread, p_body: body, p_contact: contact || null });
+    if (error) boom(error, 'Could not send your message.');
+  },
+  // visitor reads their own thread (their messages + the owner's replies)
+  async fetchOwnerThread() {
+    const thread = this.ownerThreadToken();
+    if (!CONFIGURED) return demo.read(DEMO_MSGS).filter((m) => m.thread === thread).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const { data, error } = await supa.rpc('fetch_owner_thread', { p_thread: thread });
+    if (error) boom(error, 'Could not load your chat.');
+    return data || [];
+  },
+  // owner reads every message (grouped into threads on the client)
+  async ownerFetchMessages() {
+    if (!CONFIGURED) return demo.read(DEMO_MSGS).slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const { data, error } = await supa.from('owner_messages').select('*').order('created_at', { ascending: true });
+    if (error) boom(error, 'Could not load messages.');
+    return data || [];
+  },
+  async ownerReply(thread, body) {
+    if (!CONFIGURED) {
+      const list = demo.read(DEMO_MSGS);
+      list.push({ id: crypto.randomUUID(), thread, sender: 'owner', body: String(body || '').trim(), contact: null, created_at: new Date().toISOString(), read_by_owner: true });
+      list.forEach((m) => { if (m.thread === thread && m.sender === 'visitor') m.read_by_owner = true; });
+      demo.write(DEMO_MSGS, list); return;
+    }
+    const { error } = await supa.rpc('owner_reply', { p_thread: thread, p_body: body });
+    if (error) boom(error, 'Could not send reply.');
+  },
+  async ownerMarkThreadRead(thread) {
+    if (!CONFIGURED) { const list = demo.read(DEMO_MSGS); list.forEach((m) => { if (m.thread === thread && m.sender === 'visitor') m.read_by_owner = true; }); demo.write(DEMO_MSGS, list); return; }
+    const { error } = await supa.rpc('owner_mark_thread_read', { p_thread: thread });
+    if (error) boom(error, 'Could not update.');
+  },
+  async ownerDeleteThread(thread) {
+    if (!CONFIGURED) { demo.write(DEMO_MSGS, demo.read(DEMO_MSGS).filter((m) => m.thread !== thread)); return; }
+    const { error } = await supa.rpc('owner_delete_thread', { p_thread: thread });
+    if (error) boom(error, 'Could not delete.');
+  },
+  subscribeOwnerMessages(onInsert) {
+    if (!CONFIGURED) {
+      const handler = (e) => { if (e.key === DEMO_MSGS + '_ping') onInsert && onInsert(); };
+      window.addEventListener('storage', handler);
+      return () => window.removeEventListener('storage', handler);
+    }
+    const channel = supa.channel('owner:messages')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'owner_messages' }, () => onInsert && onInsert())
+      .subscribe();
+    return () => supa.removeChannel(channel);
   },
 
   /* ---------------- admin moderation ---------------- */

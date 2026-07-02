@@ -42,14 +42,26 @@ const reviewNeeded = (p) => p.status === 'pending' || ((p.report_count || 0) > 0
 
 const state = { user: null, tab: 'review', role: 'mod', paused: false };
 
+/* live owner-inbox subscription (owner only) */
+let msgSub = null;
+function teardownMsgSub() { if (msgSub) { msgSub(); msgSub = null; } }
+async function onNewOwnerMessage() {
+  if (state.tab === 'messages') {
+    if (openConvThread && openConvRefresh) { openConvRefresh(); refreshMsgPill(); return; }
+    loadDash(); return;
+  }
+  toast('New message from a visitor 💌', 'ok');
+  refreshMsgPill();
+}
+
 /* ---------------- views ---------------- */
 function show(view) {
   ['viewLogin', 'viewAccess', 'viewDash'].forEach((v) => $(v).classList.toggle('hidden', v !== view));
 }
 async function route() {
   state.user = await DB.currentUser();
-  if (!state.user) { show('viewLogin'); return; }
-  if (!(await DB.isAdmin())) { show('viewAccess'); return; }
+  if (!state.user) { teardownMsgSub(); show('viewLogin'); return; }
+  if (!(await DB.isAdmin())) { teardownMsgSub(); show('viewAccess'); return; }
   state.role = await DB.myRole();
   state.paused = await DB.isPaused();
   const rl = state.role === 'owner' ? 'the Owner' : state.role === 'admin' ? 'a Full admin' : 'a Moderator';
@@ -60,8 +72,21 @@ async function route() {
   pb.textContent = state.paused ? 'Resume wall' : 'Pause wall';
   pb.classList.toggle('gold', !!state.paused);
   $('pausedBanner').classList.toggle('hidden', !state.paused);
+  // Messages inbox is owner-only.
+  const isOwner = state.role === 'owner';
+  $('tabMessages').classList.toggle('hidden', !isOwner);
+  if (isOwner) { if (!msgSub) msgSub = DB.subscribeOwnerMessages(onNewOwnerMessage); }
+  else { teardownMsgSub(); if (state.tab === 'messages') selectTab('review'); }
   show('viewDash');
   loadDash();
+}
+function selectTab(tab) {
+  state.tab = tab;
+  openConvThread = null; openConvRefresh = null;  // any tab switch returns to the chat list
+  $('tabs').querySelectorAll('.tab').forEach((x) => {
+    const on = x.dataset.tab === tab;
+    x.classList.toggle('active', on); x.setAttribute('aria-selected', String(on));
+  });
 }
 async function togglePause() {
   const next = !state.paused;
@@ -146,14 +171,20 @@ async function loadDash() {
   body.textContent = '';
   body.appendChild(el('div', 'a-empty', 'Loading…'));
   try {
-    const [posts, apps] = await Promise.all([DB.adminFetchPosts(), DB.adminFetchApplications()]);
+    const isOwner = state.role === 'owner';
+    const [posts, apps, msgs] = await Promise.all([
+      DB.adminFetchPosts(), DB.adminFetchApplications(),
+      isOwner ? DB.ownerFetchMessages() : Promise.resolve([]),
+    ]);
     renderStats(posts, apps);
 
     const reviewCount = posts.filter(reviewNeeded).length;
     setPill('pillReview', reviewCount);
     const appsPending = apps.filter((a) => a.status === 'pending').length;
     setPill('pillApps', appsPending);
+    if (isOwner) setPill('pillMessages', unreadCount(msgs));
 
+    if (state.tab === 'messages') return renderMessages(body, isOwner ? msgs : []);
     if (state.tab === 'admins') return renderAdmins(body);
     if (state.tab === 'apps') return renderApplications(body, apps);
 
@@ -348,6 +379,112 @@ function buildAppImage(app, which, label) {
   return wrap;
 }
 
+/* ---- owner chat (owner only): thread list + conversation view ---- */
+let openConvThread = null;   // which conversation is open (null = thread list)
+let openConvRefresh = null;  // refresh fn for the open conversation
+function chatTime(iso) {
+  const d = new Date(iso); if (isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+const unreadCount = (all) => all.filter((m) => m.sender === 'visitor' && !m.read_by_owner).length;
+async function refreshMsgPill() {
+  if (state.role !== 'owner') return;
+  try { setPill('pillMessages', unreadCount(await DB.ownerFetchMessages())); } catch (e) {}
+}
+function threadsOf(all) {
+  const map = new Map();
+  all.forEach((m) => { if (!map.has(m.thread)) map.set(m.thread, []); map.get(m.thread).push(m); });
+  const threads = [];
+  for (const [thread, list] of map) {
+    list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    threads.push({ thread, list, last: list[list.length - 1], unread: list.filter((m) => m.sender === 'visitor' && !m.read_by_owner).length });
+  }
+  threads.sort((a, b) => new Date(b.last.created_at) - new Date(a.last.created_at));
+  return threads;
+}
+function renderMessages(container, all) {
+  if (openConvThread) return renderConversation(container, all, openConvThread);
+  renderThreadList(container, all);
+}
+function renderThreadList(container, all) {
+  container.textContent = '';
+  const threads = threadsOf(all);
+  if (!threads.length) {
+    container.appendChild(el('div', 'a-empty', 'No conversations yet. When someone messages you from the wall, their chat shows up here (only you can see these).'));
+    return;
+  }
+  threads.forEach((t) => {
+    const card = el('div', 'arow thread-card' + (t.unread ? ' flagged' : ''));
+    const top = el('div', 'arow-top');
+    if (t.unread) top.appendChild(el('span', 'badge pending', t.unread + ' new'));
+    else top.appendChild(el('span', 'badge visible', 'chat'));
+    top.appendChild(el('span', 'a-time', fmt(t.last.created_at)));
+    card.appendChild(top);
+    const prev = el('div', 'thread-prev');
+    prev.appendChild(el('span', 'thread-who', t.last.sender === 'owner' ? 'You: ' : 'Them: '));
+    const body = t.last.body || '';
+    prev.appendChild(document.createTextNode(body.length > 90 ? body.slice(0, 90) + '…' : body));
+    card.appendChild(prev);
+    card.onclick = () => { openConvThread = t.thread; loadDash(); };
+    container.appendChild(card);
+  });
+}
+function renderConversation(container, all, thread) {
+  container.textContent = '';
+  let cur = all.filter((m) => m.thread === thread).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  DB.ownerMarkThreadRead(thread).then(refreshMsgPill).catch(() => {});
+
+  const bar = el('div', 'conv-bar');
+  const back = el('button', 'btn ghost small', '← All chats');
+  back.onclick = () => { openConvThread = null; openConvRefresh = null; loadDash(); };
+  bar.appendChild(back);
+  const del = el('button', 'btn danger small', 'Delete chat');
+  del.onclick = async () => {
+    if (!(await confirmDialog({ title: 'Delete this conversation?', message: 'This permanently removes the whole chat and cannot be undone.', confirmText: 'Delete', danger: true }))) return;
+    try { await DB.ownerDeleteThread(thread); toast('Chat deleted.', 'ok'); openConvThread = null; openConvRefresh = null; loadDash(); }
+    catch (e) { toast(e.message || 'Could not delete.', 'err'); }
+  };
+  bar.appendChild(del);
+  container.appendChild(bar);
+
+  const box = el('div', 'chat-body admin-chat');
+  const paint = (msgs) => {
+    box.textContent = '';
+    msgs.forEach((m) => {
+      const b = el('div', 'bubble ' + (m.sender === 'owner' ? 'me' : 'them'));
+      b.appendChild(el('div', 'bubble-body', m.body));
+      b.appendChild(el('div', 'bubble-time', (m.sender === 'visitor' ? 'Visitor · ' : '') + chatTime(m.created_at)));
+      box.appendChild(b);
+    });
+    box.scrollTop = box.scrollHeight;
+  };
+  paint(cur);
+  container.appendChild(box);
+
+  const foot = el('div', 'chat-input');
+  const ta = el('textarea'); ta.rows = 1; ta.maxLength = 1000; ta.placeholder = 'Reply…'; ta.setAttribute('data-autofocus', '');
+  const send = el('button', 'chat-send'); send.setAttribute('aria-label', 'Send');
+  send.appendChild(svg('<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>', '1.9'));
+  foot.appendChild(ta); foot.appendChild(send); container.appendChild(foot);
+  const autoGrow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(110, ta.scrollHeight) + 'px'; };
+  ta.addEventListener('input', autoGrow);
+
+  const refresh = async () => {
+    try {
+      const l = (await DB.ownerFetchMessages()).filter((m) => m.thread === thread).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      if (l.length !== cur.length) { cur = l; paint(cur); }
+    } catch (e) {}
+  };
+  openConvRefresh = refresh;
+  const doSend = async () => {
+    const body = ta.value.trim(); if (!body) return; ta.value = ''; autoGrow();
+    cur = cur.concat([{ id: 'tmp', thread, sender: 'owner', body, created_at: new Date().toISOString() }]); paint(cur);
+    try { await DB.ownerReply(thread, body); await refresh(); } catch (e) { toast(e.message || 'Could not send.', 'err'); }
+  };
+  send.onclick = doSend;
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); } });
+}
+
 /* ---- admins ---- */
 async function renderAdmins(container) {
   container.textContent = '';
@@ -424,12 +561,7 @@ function boot() {
   $('pauseBtn').onclick = togglePause;
 
   $('tabs').querySelectorAll('.tab').forEach((t) => {
-    t.onclick = () => {
-      $('tabs').querySelectorAll('.tab').forEach((x) => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
-      t.classList.add('active'); t.setAttribute('aria-selected', 'true');
-      state.tab = t.dataset.tab;
-      loadDash();
-    };
+    t.onclick = () => { selectTab(t.dataset.tab); loadDash(); };
   });
 
   route();

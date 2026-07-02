@@ -363,6 +363,82 @@ function openComposerSheet() {
   });
 }
 
+/* ---------------- two-way chat with the owner ---------------- */
+function chatTime(iso) {
+  const d = new Date(iso); if (isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+function renderChatBubbles(box, msgs) {
+  box.textContent = '';
+  if (!msgs.length) {
+    box.appendChild(el('div', 'chat-empty', 'Say hi to the owner. Only the owner can read this, and they can reply right here. 💬'));
+    return;
+  }
+  msgs.forEach((m) => {
+    const b = el('div', 'bubble ' + (m.sender === 'owner' ? 'them' : 'me'));
+    b.appendChild(el('div', 'bubble-body', m.body));
+    b.appendChild(el('div', 'bubble-time', (m.sender === 'owner' ? 'Owner · ' : '') + chatTime(m.created_at)));
+    box.appendChild(b);
+  });
+}
+async function updateOwnerDot() {
+  const fab = $('ownerFab'); if (!fab) return;
+  try {
+    const token = localStorage.getItem('prmsu_owner_thread');
+    if (!token) { fab.classList.remove('has-unread'); return; }
+    const seen = Number(localStorage.getItem('prmsu_owner_seen') || 0);
+    const msgs = await DB.fetchOwnerThread();
+    const hasNew = msgs.some((m) => m.sender === 'owner' && new Date(m.created_at).getTime() > seen);
+    fab.classList.toggle('has-unread', hasNew);
+  } catch (e) {}
+}
+function openOwnerChat() {
+  let poll = null;
+  openSheet((close, sheet) => {
+    const head = el('div', 'sheet-head');
+    const ht = el('div', 'chat-head-txt');
+    ht.appendChild(el('h3', null, 'Chat with the owner'));
+    ht.appendChild(el('div', 'chat-sub', 'Private. Only the owner can read this.'));
+    head.appendChild(ht);
+    const x = el('button', 'sheet-x', '×'); x.setAttribute('aria-label', 'Close'); x.onclick = () => close(null);
+    head.appendChild(x); sheet.appendChild(head);
+
+    const box = el('div', 'chat-body'); sheet.appendChild(box);
+    box.appendChild(el('div', 'chat-empty', 'Loading…'));
+
+    const foot = el('div', 'chat-input');
+    const ta = el('textarea'); ta.rows = 1; ta.maxLength = 1000; ta.placeholder = 'Type a message…'; ta.setAttribute('data-autofocus', '');
+    const send = el('button', 'chat-send'); send.setAttribute('aria-label', 'Send'); send.appendChild(svg(ICON.send, '1.9'));
+    foot.appendChild(ta); foot.appendChild(send); sheet.appendChild(foot);
+
+    let msgs = [];
+    const scrollDown = () => { box.scrollTop = box.scrollHeight; };
+    const autoGrow = () => { ta.style.height = 'auto'; ta.style.height = Math.min(110, ta.scrollHeight) + 'px'; };
+    const load = async (scroll) => {
+      try {
+        const fresh = await DB.fetchOwnerThread();
+        if (fresh.length !== msgs.length) { msgs = fresh; renderChatBubbles(box, msgs); if (scroll) scrollDown(); }
+        try { localStorage.setItem('prmsu_owner_seen', String(Date.now())); } catch (e) {}
+        updateOwnerDot();
+      } catch (e) {}
+    };
+    const doSend = async () => {
+      const body = ta.value.trim(); if (!body) return;
+      ta.value = ''; autoGrow();
+      msgs.push({ id: 'tmp' + msgs.length, sender: 'visitor', body, created_at: new Date().toISOString() });
+      renderChatBubbles(box, msgs); scrollDown();
+      try { await DB.sendOwnerMessage(body, null); await load(true); }
+      catch (err) { toast(err.message || 'Could not send.', 'err'); }
+    };
+    send.onclick = doSend;
+    ta.addEventListener('input', autoGrow);
+    ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); } });
+
+    load(true);
+    poll = setInterval(() => load(true), 3000);
+  }).then(() => { if (poll) clearInterval(poll); });
+}
+
 /* ---------------- list mutations ---------------- */
 function patchCard(post) {
   const oldEl = document.querySelector('.pcard[data-id="' + cssEsc(post.id) + '"]');
@@ -418,6 +494,9 @@ function initChrome() {
   $('postTrigger').onclick = openComposerSheet;
   $('fab').onclick = openComposerSheet;
 
+  // "message the owner" floating button (works even when the wall is paused)
+  const oFab = $('ownerFab'); if (oFab) oFab.onclick = openOwnerChat;
+
   // fab appears after scrolling a bit
   const fab = $('fab');
   const onScroll = () => { fab.classList.toggle('show', window.scrollY > 260); };
@@ -439,5 +518,6 @@ function boot() {
   updateOnline(); setInterval(updateOnline, 30000);
   buildFilterChips(); buildSortSeg(); initDesktopComposer(); initChrome();
   load(false); wireRealtime(); checkPaused();
+  updateOwnerDot(); setInterval(updateOwnerDot, 25000);
 }
 boot();

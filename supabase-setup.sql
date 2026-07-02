@@ -636,6 +636,93 @@ drop policy if exists settings_public_read on public.settings;
 create policy settings_public_read on public.settings for select using (true);
 
 -- ----------------------------------------------------------------------------
+--  OWNER MESSAGES  (two-way private chat between a visitor and the owner)
+--  Anyone may start a private conversation with the owner from the wall. Each
+--  browser gets a random "thread" token that groups its conversation. ONLY the
+--  owner can read every message (not full admins, not moderators). A visitor
+--  reads ONLY their own thread, via fetch_owner_thread() with their own token.
+-- ----------------------------------------------------------------------------
+drop table if exists public.owner_messages cascade;
+-- drop any earlier one-way version of these functions so we don't leave overloads
+drop function if exists public.send_owner_message(text, text);
+drop function if exists public.owner_mark_message_read(uuid);
+drop function if exists public.owner_delete_message(uuid);
+create table public.owner_messages (
+  id            uuid primary key default gen_random_uuid(),
+  thread        text not null,
+  sender        text not null check (sender in ('visitor','owner')),
+  body          text not null check (char_length(btrim(body)) between 1 and 1000),
+  contact       text,
+  created_at    timestamptz not null default now(),
+  read_by_owner boolean not null default false
+);
+create index if not exists owner_messages_thread_idx on public.owner_messages (thread, created_at);
+
+alter table public.owner_messages enable row level security;
+-- Only the OWNER may read the whole inbox through the table API. Visitors never
+-- read the table directly; they call fetch_owner_thread() with their own token.
+drop policy if exists owner_messages_owner_read on public.owner_messages;
+create policy owner_messages_owner_read on public.owner_messages
+  for select to authenticated using (public.is_owner());
+
+-- A visitor sends a message to the owner (starts or continues their thread).
+create or replace function public.send_owner_message(p_thread text, p_body text, p_contact text default null)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  clean_thread  text := nullif(btrim(coalesce(p_thread, '')), '');
+  clean_body    text := btrim(coalesce(p_body, ''));
+  clean_contact text := nullif(btrim(coalesce(p_contact, '')), '');
+begin
+  if clean_thread is null or char_length(clean_thread) > 64 then raise exception 'Bad conversation id.'; end if;
+  if char_length(clean_body) = 0 then raise exception 'Message cannot be empty.'; end if;
+  if char_length(clean_body) > 1000 then raise exception 'Message is too long (max 1000 characters).'; end if;
+  if clean_contact is not null and char_length(clean_contact) > 160 then clean_contact := left(clean_contact, 160); end if;
+  insert into public.owner_messages (thread, sender, body, contact) values (clean_thread, 'visitor', clean_body, clean_contact);
+end;$$;
+
+-- A visitor reads their own thread (their messages + the owner's replies).
+-- SECURITY DEFINER + exact-token match means a visitor only ever sees their own
+-- conversation; thread tokens are random and unguessable.
+create or replace function public.fetch_owner_thread(p_thread text)
+returns setof public.owner_messages language sql security definer set search_path = public as $$
+  select * from public.owner_messages
+   where thread = nullif(btrim(coalesce(p_thread, '')), '')
+   order by created_at asc;
+$$;
+
+-- The owner replies inside a thread (and marks that thread's visitor messages read).
+create or replace function public.owner_reply(p_thread text, p_body text)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  clean_thread text := nullif(btrim(coalesce(p_thread, '')), '');
+  clean_body   text := btrim(coalesce(p_body, ''));
+begin
+  if not public.is_owner() then raise exception 'Only the owner can reply.'; end if;
+  if clean_thread is null then raise exception 'Bad conversation id.'; end if;
+  if char_length(clean_body) = 0 then raise exception 'Reply cannot be empty.'; end if;
+  if char_length(clean_body) > 1000 then raise exception 'Reply is too long (max 1000 characters).'; end if;
+  insert into public.owner_messages (thread, sender, body) values (clean_thread, 'owner', clean_body);
+  update public.owner_messages set read_by_owner = true where thread = clean_thread and sender = 'visitor';
+end;$$;
+
+-- The owner marks a thread's visitor messages as read.
+create or replace function public.owner_mark_thread_read(p_thread text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_owner() then raise exception 'Only the owner can do this.'; end if;
+  update public.owner_messages set read_by_owner = true
+   where thread = nullif(btrim(coalesce(p_thread, '')), '') and sender = 'visitor';
+end;$$;
+
+-- The owner deletes an entire conversation.
+create or replace function public.owner_delete_thread(p_thread text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_owner() then raise exception 'Only the owner can do this.'; end if;
+  delete from public.owner_messages where thread = nullif(btrim(coalesce(p_thread, '')), '');
+end;$$;
+
+-- ----------------------------------------------------------------------------
 --  GRANTS  (who may call each function)
 -- ----------------------------------------------------------------------------
 grant execute on function public.create_post(text, text, text, text) to anon, authenticated;
@@ -657,6 +744,11 @@ grant execute on function public.submit_admin_application(text, text, text, text
 grant execute on function public.approve_admin_application(uuid)    to authenticated;
 grant execute on function public.reject_admin_application(uuid)     to authenticated;
 grant execute on function public.admin_delete_application(uuid)     to authenticated;
+grant execute on function public.send_owner_message(text, text, text) to anon, authenticated;
+grant execute on function public.fetch_owner_thread(text)             to anon, authenticated;
+grant execute on function public.owner_reply(text, text)              to authenticated;
+grant execute on function public.owner_mark_thread_read(text)         to authenticated;
+grant execute on function public.owner_delete_thread(text)            to authenticated;
 
 -- ----------------------------------------------------------------------------
 --  REALTIME  (live updates on the public wall)
@@ -669,6 +761,12 @@ begin
   exception
     when duplicate_object then null;   -- already added
     when undefined_object then null;   -- publication missing (older projects)
+  end;
+  begin
+    alter publication supabase_realtime add table public.owner_messages;  -- live owner inbox
+  exception
+    when duplicate_object then null;
+    when undefined_object then null;
   end;
 end $$;
 
