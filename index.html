@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PRMSU Freedom Wall · Say it anonymously</title>
+<meta name="description" content="An anonymous freedom wall for PRMSU students (Ramonians). Share a thought, a confession, an appreciation, or a rant. Post with no account, and keep it kind.">
+<meta name="theme-color" content="#103A8A">
+<link rel="icon" type="image/png" href="seal.png">
+<link rel="apple-touch-icon" href="seal.png">
+
+<!-- Social share preview -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PRMSU Freedom Wall">
+<meta property="og:title" content="PRMSU Freedom Wall · Say it anonymously">
+<meta property="og:description" content="Share a thought, confession, or shoutout with fellow Ramonians, anonymously. Keep it kind.">
+<meta property="og:image" content="seal.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="PRMSU Freedom Wall">
+<meta name="twitter:description" content="Say it anonymously. A freedom wall for PRMSU students.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ================= NAV ================= -->
+  <header class="nav">
+    <div class="nav-in">
+      <div class="brand">
+        <a href="index.html">
+          <img id="navSeal" src="seal.png" alt="PRMSU">
+          <div>
+            <div class="brand-t">PRMSU Freedom Wall</div>
+            <div class="brand-s">Say it anonymously · be kind</div>
+          </div>
+        </a>
+      </div>
+      <nav class="nav-links">
+        <a href="https://prmsu.edu.ph/" target="_blank" rel="noopener">PRMSU Website
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+        <a class="nav-admin" href="apply.html">Apply to moderate</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- demo-mode banner (shown only when Supabase isn't configured) -->
+  <div id="demoBar" class="demo-bar hidden">
+    <div class="demo-bar-in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div><b>Demo mode.</b> Posts are saved only in this browser and aren't shared with anyone. Add your Supabase keys in <b>config.js</b> to turn this into a real, live wall.</div>
+    </div>
+  </div>
+
+  <main class="board">
+    <div class="wrap">
+
+      <section class="hero">
+        <p class="hero-eyebrow">Anonymous · student-run</p>
+        <h1 class="hero-t">The PRMSU <span>Freedom Wall</span></h1>
+        <p class="hero-s">A place to let it out. Post a thought, a confession, a shoutout, or a rant. No name needed. Report anything nasty, and keep it kind. 💙</p>
+        <div class="hero-stat"><span class="live"></span> <b id="userCount">…</b>&nbsp;Ramonians on the wall</div>
+      </section>
+
+      <!-- ================= COMPOSE ================= -->
+      <section class="compose">
+        <textarea id="body" maxlength="500" placeholder="What's on your mind, Ramonians? Type it here." aria-label="Write your post"></textarea>
+        <div class="compose-tools">
+          <div class="swatches" id="swatches" role="radiogroup" aria-label="Note color">
+            <button type="button" class="swatch sw-sky sel"  data-color="sky"   role="radio" aria-checked="true"  aria-label="Sky"></button>
+            <button type="button" class="swatch sw-gold"     data-color="gold"  role="radio" aria-checked="false" aria-label="Gold"></button>
+            <button type="button" class="swatch sw-mint"     data-color="mint"  role="radio" aria-checked="false" aria-label="Mint"></button>
+            <button type="button" class="swatch sw-rose"     data-color="rose"  role="radio" aria-checked="false" aria-label="Rose"></button>
+            <button type="button" class="swatch sw-lilac"    data-color="lilac" role="radio" aria-checked="false" aria-label="Lilac"></button>
+            <button type="button" class="swatch sw-peach"    data-color="peach" role="radio" aria-checked="false" aria-label="Peach"></button>
+          </div>
+          <input id="nick" class="nick" type="text" maxlength="24" placeholder="Nickname (optional)" aria-label="Optional nickname">
+          <div class="compose-right">
+            <span class="counter" id="counter">500</span>
+            <button class="btn" id="postBtn">Post to wall
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+          </div>
+        </div>
+        <div id="composeErr" class="err hidden"></div>
+      </section>
+
+      <!-- ================= FEED ================= -->
+      <div class="feed-head">
+        <h2>On the wall <span class="cnt" id="count"></span></h2>
+        <button class="refresh" id="refreshBtn" aria-label="Refresh the wall">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div id="feed" class="grid"></div>
+
+    </div>
+  </main>
+
+  <footer class="foot">
+    <div class="foot-links">
+      <a href="https://prmsu.edu.ph/" target="_blank" rel="noopener">PRMSU Website</a>
+      <a href="admin.html">Admin</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Community Rules &amp; Terms</a>
+    </div>
+    <div class="foot-note">Built for PRMSU students · Anonymous, but not a place for harassment · Not an official university tool.</div>
+    <div class="foot-credit">Created by Red Pogi Lang.</div>
+    <div class="foot-meta" id="footMeta"></div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="profanity.js"></script>
+  <script type="module" src="wall.js"></script>
+</body>
+</html>

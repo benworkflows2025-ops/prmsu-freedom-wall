@@ -1,0 +1,15 @@
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+
+# Node (not used by this static site, but just in case)
+node_modules/
+
+# Local env / secrets - NEVER commit the Supabase service_role (secret) key
+.env
+.env.*

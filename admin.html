@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin · PRMSU Freedom Wall</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#103A8A">
+<link rel="icon" type="image/png" href="seal.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-in">
+      <div class="brand">
+        <a href="index.html">
+          <img src="seal.png" alt="PRMSU">
+          <div>
+            <div class="brand-t">PRMSU Freedom Wall</div>
+            <div class="brand-s">Admin &amp; moderation</div>
+          </div>
+        </a>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html">Back to the wall</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="admin-wrap">
+
+    <!-- ============ LOGIN ============ -->
+    <section id="viewLogin" class="hidden">
+      <div class="login">
+        <h1 id="loginTitle">Admin sign in</h1>
+        <p class="sub" id="loginSub">Sign in to moderate the wall. This area is only for administrators.</p>
+        <div id="loginMsg" class="login-msg hidden"></div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <button class="btn" id="authBtn">Sign in</button>
+        <p class="switch" id="switchLine"></p>
+        <p class="hint">Want to help moderate? <a href="apply.html">Apply here</a>.</p>
+        <p class="hint" id="demoHint"></p>
+      </div>
+    </section>
+
+    <!-- ============ SIGNED IN, NOT ADMIN ============ -->
+    <section id="viewAccess" class="hidden">
+      <div class="login">
+        <h1>Not an admin yet</h1>
+        <p class="sub">You are signed in, but this account does not have moderator access.</p>
+        <div id="accessMsg" class="login-msg hidden"></div>
+        <a class="btn gold" href="apply.html">Apply to moderate</a>
+        <p class="hint">If you already applied and were approved, make sure you signed in with the exact email you used to apply.</p>
+        <p class="switch">
+          <button class="link" id="claimLink" type="button">First-time setup: claim this site</button>
+          &nbsp;·&nbsp;
+          <button class="link" id="accessSignOut" type="button">Sign out</button>
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section id="viewDash" class="hidden">
+      <div class="dash-top">
+        <div>
+          <h1>Moderation</h1>
+          <div class="who" id="dashWho">Signed in as admin</div>
+        </div>
+        <div class="dash-actions">
+          <a class="btn ghost small" href="index.html" target="_blank" rel="noopener">Open the wall ↗</a>
+          <button class="btn ghost small" id="signOutBtn">Sign out</button>
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+
+      <div class="tabs" id="tabs" role="tablist" aria-label="Moderation filters">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="review">Needs review <span class="pill zero" id="pillReview">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="visible">Live</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="hidden">Hidden</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="all">All</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="apps">Applications <span class="pill zero" id="pillApps">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="admins">Admins</button>
+      </div>
+
+      <div id="dashBody"></div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <div class="foot-links">
+      <a href="index.html">Back to the wall</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Community Rules &amp; Terms</a>
+    </div>
+    <div class="foot-credit">Created by Red Pogi Lang.</div>
+    <div class="foot-meta" id="footMeta"></div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
