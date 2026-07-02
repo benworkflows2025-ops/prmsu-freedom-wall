@@ -535,6 +535,8 @@ body.sheet-open{overflow:hidden}
 .doc-intro{color:#3c485f;font-size:16px;line-height:1.6;margin:0 0 16px;max-width:660px}
 .doc-nav{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 2px 8px;margin-bottom:14px;position:sticky;top:calc(var(--appbar-h) + var(--sat));background:var(--bg);z-index:5}
 .doc-nav::-webkit-scrollbar{display:none}
+/* desktop has no swipe: wrap the chips so every anchor stays reachable */
+@media (min-width:640px){.doc-nav{flex-wrap:wrap;overflow-x:visible}}
 .doc-nav a{white-space:nowrap;flex:0 0 auto;font-size:13px;font-weight:700;color:var(--blue);background:#fff;border:1px solid var(--line);padding:8px 14px;border-radius:999px;text-decoration:none;min-height:38px;display:inline-flex;align-items:center;transition:background .15s,transform .12s var(--ease)}
 .doc-nav a:hover{background:#F1F5FE}.doc-nav a:active{transform:scale(.95)}
 .doc-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px;scroll-margin-top:calc(var(--appbar-h) + var(--sat) + 60px);animation:cardin .45s var(--ease) both}
