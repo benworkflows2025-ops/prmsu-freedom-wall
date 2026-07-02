@@ -46,7 +46,7 @@ const ICON = {
 };
 
 /* ---------------- state ---------------- */
-const state = { posts: [], map: new Map(), dismissed: new Set(), cat: 'all', sort: 'new', q: '', shown: LOAD_STEP, loading: true, composeCat: 'confession' };
+const state = { posts: [], map: new Map(), dismissed: new Set(), cat: 'all', sort: 'new', q: '', shown: LOAD_STEP, loading: true, composeCat: 'confession', paused: false };
 
 /* ---------------- per-browser identity + likes ---------------- */
 function getHandle() {
@@ -82,14 +82,31 @@ function contentIssue(text) {
 }
 
 /* ---------------- simulated online count ---------------- */
-function fakeUsers() {
-  const BASE = 580, START = Date.UTC(2026, 5, 29, 9, 0, 0);
-  const periods = Math.max(0, Math.floor((Date.now() - START) / 86400000));
-  let total = BASE;
-  for (let i = 0; i < periods; i++) total += 15 + (((i * 2654435761) % 31) + 31) % 31;
-  return total;
+// Realistic "online now" count driven by local time of day, with a per-30s
+// deterministic wiggle so it drifts naturally and rare daytime spikes.
+function onlineCount() {
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+  // typical concurrent online per hour (00..23)
+  const base = [2, 2, 1, 1, 2, 4, 8, 15, 22, 24, 26, 25, 28, 24, 22, 24, 26, 24, 22, 24, 26, 23, 15, 7];
+  const b0 = base[h], b1 = base[(h + 1) % 24];
+  let v = b0 + (b1 - b0) * (m / 60);            // smooth between hours
+  const bucket = ((now.getFullYear() * 400 + now.getMonth() * 31 + now.getDate()) * 24 + h) * 120 + m * 2 + (s >= 30 ? 1 : 0);
+  let x = (bucket ^ 0x9e3779b9) >>> 0;
+  x = Math.imul(x ^ (x >>> 15), 0x85ebca6b) >>> 0;
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0;
+  const r = ((x ^ (x >>> 16)) >>> 0) / 4294967296;
+  if (h >= 8 && h <= 21 && r > 0.955) v = 38 + Math.round((r - 0.955) / 0.045 * 14); // rare spike ~38-52
+  else v = v * (0.8 + r * 0.4);                 // +/- ~20% wiggle
+  return Math.max(2, Math.round(v));            // never below the visitor + a friend
 }
-function updateUserCount() { const e = $('userCount'); if (e) e.textContent = fakeUsers().toLocaleString(); }
+function updateOnline() { const e = $('onlineCount'); if (e) e.textContent = String(onlineCount()); }
+
+function applyPaused() {
+  const bar = $('pauseBar'); if (bar) bar.classList.toggle('hidden', !state.paused);
+  ['postBtn', 'postTrigger', 'fab'].forEach((id) => { const e = $(id); if (e) e.disabled = !!state.paused; });
+}
+async function checkPaused() { try { state.paused = await DB.isPaused(); } catch { state.paused = false; } applyPaused(); }
 
 /* ============================================================================
    CATEGORY / FILTER / SORT UI
@@ -269,6 +286,7 @@ function openComments(post) {
 
 /* ---------------- compose ---------------- */
 async function doPost(body, category, onDone) {
+  if (state.paused) throw new Error('The wall is paused by an admin right now. Please try again later.');
   const issue = contentIssue(body);
   if (!body.trim()) throw new Error('Write something first 🙂');
   if (body.length > POST_MAX) throw new Error('Sobrang haba — keep it under ' + POST_MAX + ' characters.');
@@ -374,7 +392,7 @@ function wireRealtime() {
     onUpdate: (row) => { if (!row) return; if (row.status && row.status !== 'visible') { removePost(row.id); return; } upsertPost(row, true); },
     onDelete: (row) => { if (row && row.id) removePost(row.id); },
   });
-  const resync = () => { updateUserCount(); if (document.visibilityState === 'visible') load(true); };
+  const resync = () => { updateOnline(); if (document.visibilityState === 'visible') { load(true); checkPaused(); } };
   document.addEventListener('visibilitychange', resync);
   window.addEventListener('focus', resync);
   setInterval(resync, 60000);
@@ -418,17 +436,8 @@ function initChrome() {
 function boot() {
   if (!DB.isConfigured()) $('demoBar').classList.remove('hidden');
   $('footMeta').textContent = 'Version ' + (CFG.VERSION || '1.0.0') + ' · Last updated ' + (CFG.UPDATED || '');
-  // inject the live "online" badge into the welcome banner
-  const badges = document.querySelector('.welcome-badges');
-  if (badges && !$('userBadge')) {
-    const span = el('span', 'badge2'); span.id = 'userBadge';
-    span.appendChild(el('span', 'dot'));
-    const b = el('b'); b.id = 'userCount'; span.appendChild(b);
-    span.appendChild(document.createTextNode(' online'));
-    badges.appendChild(span);
-  }
-  updateUserCount();
+  updateOnline(); setInterval(updateOnline, 30000);
   buildFilterChips(); buildSortSeg(); initDesktopComposer(); initChrome();
-  load(false); wireRealtime();
+  load(false); wireRealtime(); checkPaused();
 }
 boot();

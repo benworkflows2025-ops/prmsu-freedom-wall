@@ -76,6 +76,8 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .appbar-links a:hover{background:var(--bg2);color:var(--blue)}
 .appbar-links a.cta{background:var(--blue);color:#fff}
 .appbar-links a.cta:hover{background:var(--blue-d)}
+.appbar .back{margin-left:auto;color:var(--ink);font-size:14px;font-weight:600;text-decoration:none;padding:9px 13px;border-radius:10px;white-space:nowrap}
+.appbar .back:hover{background:var(--bg2);color:var(--blue)}
 .menu-btn{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;
   border:1px solid var(--line);background:var(--bg2);border-radius:12px;cursor:pointer;color:var(--ink);-webkit-tap-highlight-color:transparent}
 .menu-btn:active{transform:scale(.94)}
@@ -496,3 +498,27 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .legal h2{font-weight:700;font-size:17px;margin:26px 0 8px}
 .legal p,.legal li{color:#3c485f;font-size:15px;line-height:1.65}
 .legal ul{margin:0 0 12px;padding-left:20px}.legal li{margin-bottom:6px}.legal a{color:var(--blue)}
+
+/* live "online now" indicator on the welcome banner */
+.live-online{position:absolute;top:14px;right:16px;display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px}
+.live-online b{font-weight:800}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#39e08a;animation:livepulse2 2.2s infinite}
+@keyframes livepulse2{0%{box-shadow:0 0 0 0 rgba(57,224,138,.55)}70%{box-shadow:0 0 0 7px rgba(57,224,138,0)}100%{box-shadow:0 0 0 0 rgba(57,224,138,0)}}
+@media (max-width:520px){.live-online{top:12px;right:12px;font-size:11.5px;padding:5px 10px}}
+
+/* paused-wall bar (public) + admin banner */
+.pause-bar{display:flex;gap:11px;align-items:flex-start;background:#FFF1E6;border:1px solid #F6C89B;color:#7a4712;border-radius:14px;padding:12px 14px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
+.pause-bar svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
+.pause-bar b{color:#5a340b}
+.pause-banner{background:#FFF1E6;border:1px solid #F6C89B;color:#7a4712;border-radius:12px;padding:11px 14px;font-size:13.5px;font-weight:600;margin-bottom:16px}
+
+/* admin roles */
+.role-badge{margin-left:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:999px}
+.role-badge.owner{background:#F1ECFE;color:#6d43f5}
+.role-badge.admin{background:#E7F2FE;color:#2b6fd6}
+.role-badge.mod{background:var(--bg2);color:var(--muted)}
+.role-acts{margin-left:auto;display:flex;gap:12px;flex-wrap:wrap}
+.role-acts .link{font-size:12.5px}
+.role-acts .danger{color:var(--danger)}
+.role-select{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.admins-list li{flex-wrap:wrap}

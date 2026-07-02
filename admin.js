@@ -40,7 +40,7 @@ function maskEmail(e) {
 }
 const reviewNeeded = (p) => p.status === 'pending' || ((p.report_count || 0) > 0 && p.status === 'visible');
 
-const state = { user: null, tab: 'review' };
+const state = { user: null, tab: 'review', role: 'mod', paused: false };
 
 /* ---------------- views ---------------- */
 function show(view) {
@@ -49,11 +49,26 @@ function show(view) {
 async function route() {
   state.user = await DB.currentUser();
   if (!state.user) { show('viewLogin'); return; }
-  const admin = await DB.isAdmin();
-  if (!admin) { show('viewAccess'); return; }
-  $('dashWho').textContent = 'Signed in as admin';
+  if (!(await DB.isAdmin())) { show('viewAccess'); return; }
+  state.role = await DB.myRole();
+  state.paused = await DB.isPaused();
+  const rl = state.role === 'owner' ? 'the Owner' : state.role === 'admin' ? 'a Full admin' : 'a Moderator';
+  $('dashWho').textContent = 'Signed in as ' + rl;
+  const full = state.role === 'owner' || state.role === 'admin';
+  const pb = $('pauseBtn');
+  pb.classList.toggle('hidden', !full);
+  pb.textContent = state.paused ? 'Resume wall' : 'Pause wall';
+  pb.classList.toggle('gold', !!state.paused);
+  $('pausedBanner').classList.toggle('hidden', !state.paused);
   show('viewDash');
   loadDash();
+}
+async function togglePause() {
+  const next = !state.paused;
+  const ok = await confirmDialog({ title: next ? 'Pause the wall?' : 'Resume the wall?', message: next ? 'Nobody can post or comment until you resume. People can still read.' : 'People can post and comment again.', confirmText: next ? 'Pause' : 'Resume', danger: next });
+  if (!ok) return;
+  try { await DB.setPaused(next); toast(next ? 'Wall paused.' : 'Wall resumed.', 'ok'); route(); }
+  catch (err) { toast(err.message || 'Could not update.', 'err'); }
 }
 
 /* ---------------- login ---------------- */
@@ -327,47 +342,61 @@ function buildAppImage(app, which, label) {
 async function renderAdmins(container) {
   container.textContent = '';
   const box = el('div', 'admins-box');
-  box.appendChild(el('h3', null, 'Moderators'));
+  box.appendChild(el('h3', null, 'The team'));
   const ul = el('ul', 'admins-list');
   box.appendChild(ul);
+  const rLabel = (r) => r === 'owner' ? 'Owner' : r === 'admin' ? 'Full admin' : 'Moderator';
+  const isOwner = state.role === 'owner';
+  const isFull = isOwner || state.role === 'admin';
   try {
     const admins = await DB.fetchAdmins();
     admins.forEach((a) => {
+      const role = a.role || 'mod';
       const li = el('li');
       li.appendChild(svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', '1.8'));
-      const isYou = a.email === (state.user && state.user.email);
-      li.appendChild(el('span', null, maskEmail(a.email) + (isYou ? '  (you)' : '')));
+      const you = a.email === (state.user && state.user.email);
+      li.appendChild(el('span', null, maskEmail(a.email) + (you ? '  (you)' : '')));
+      li.appendChild(el('span', 'role-badge ' + role, rLabel(role)));
+      if (isOwner && role !== 'owner') {
+        const acts = el('span', 'role-acts');
+        const t = el('button', 'link', role === 'admin' ? 'Make moderator' : 'Make full admin');
+        t.onclick = async () => { try { await DB.setAdminRole(a.email, role === 'admin' ? 'mod' : 'admin'); toast('Role updated.', 'ok'); renderAdmins(container); } catch (e) { toast(e.message, 'err'); } };
+        const rm = el('button', 'link danger', 'Remove');
+        rm.onclick = async () => { if (!(await confirmDialog({ title: 'Remove this person?', message: 'They lose all access.', confirmText: 'Remove', danger: true }))) return; try { await DB.removeAdmin(a.email); toast('Removed.', 'ok'); renderAdmins(container); } catch (e) { toast(e.message, 'err'); } };
+        acts.appendChild(t); acts.appendChild(rm); li.appendChild(acts);
+      }
       ul.appendChild(li);
     });
-    if (!admins.length) ul.appendChild(el('li', null, 'No moderators yet.'));
-  } catch (err) { ul.appendChild(el('li', null, err.message || 'Could not load moderators.')); }
+    if (!admins.length) ul.appendChild(el('li', null, 'No one yet.'));
+  } catch (err) { ul.appendChild(el('li', null, err.message || 'Could not load.')); }
 
-  // add a moderator directly by email (no application needed)
-  box.appendChild(el('div', 'admins-sub', 'Add a moderator by email'));
-  const form = el('div', 'add-admin');
-  const input = el('input');
-  input.type = 'email';
-  input.placeholder = 'new-moderator@email.com';
-  const addBtn = el('button', 'btn small', 'Add moderator');
-  const submit = async () => {
-    const email = input.value.trim().toLowerCase();
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email.', 'err'); return; }
-    addBtn.disabled = true;
-    try {
-      await DB.addAdmin(email);
-      toast('Added. They can moderate once they sign in with that email.', 'ok');
-      input.value = '';
-      renderAdmins(container);
-    } catch (err) { toast(err.message || 'Could not add moderator.', 'err'); }
-    finally { addBtn.disabled = false; }
-  };
-  addBtn.onclick = submit;
-  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
-  form.appendChild(input);
-  form.appendChild(addBtn);
-  box.appendChild(form);
-
-  box.appendChild(el('p', 'admins-note', 'A moderator can review, hide, and delete posts, comments, and applications, just like you. They get access after creating an account on the sign-in page using the exact email you add here. Emails are masked so a screenshot never reveals who the moderators are. (You can also approve them from the Applications tab.)'));
+  if (isFull) {
+    box.appendChild(el('div', 'admins-sub', 'Add someone by email'));
+    const form = el('div', 'add-admin');
+    const input = el('input'); input.type = 'email'; input.placeholder = 'email@example.com';
+    let role = 'mod', roleSel = null;
+    if (isOwner) {
+      roleSel = el('select', 'role-select');
+      [['mod', 'Moderator'], ['admin', 'Full admin']].forEach(([v, l]) => { const o = el('option', null, l); o.value = v; roleSel.appendChild(o); });
+      roleSel.onchange = () => { role = roleSel.value; };
+    }
+    const addBtn = el('button', 'btn small', 'Add');
+    const submit = async () => {
+      const email = input.value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Enter a valid email.', 'err'); return; }
+      addBtn.disabled = true;
+      try { await DB.addAdmin(email, role); toast('Added. They get access after signing in with that email.', 'ok'); input.value = ''; renderAdmins(container); }
+      catch (e) { toast(e.message || 'Could not add.', 'err'); } finally { addBtn.disabled = false; }
+    };
+    addBtn.onclick = submit;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+    form.appendChild(input); if (roleSel) form.appendChild(roleSel); form.appendChild(addBtn);
+    box.appendChild(form);
+  }
+  const note = isOwner ? 'As owner you can change roles and remove people. Full admins can pause the wall and add moderators. Emails are masked so a screenshot never reveals the team.'
+    : isFull ? 'You can add moderators and pause the wall. Only the owner can change roles or remove people.'
+    : 'Only full admins can add people or pause the wall.';
+  box.appendChild(el('p', 'admins-note', note));
   container.appendChild(box);
 }
 
@@ -382,6 +411,7 @@ function boot() {
   $('claimLink').onclick = doClaim;
   $('accessSignOut').onclick = async () => { await DB.signOut(); route(); };
   $('signOutBtn').onclick = async () => { await DB.signOut(); toast('Signed out.'); route(); };
+  $('pauseBtn').onclick = togglePause;
 
   $('tabs').querySelectorAll('.tab').forEach((t) => {
     t.onclick = () => {

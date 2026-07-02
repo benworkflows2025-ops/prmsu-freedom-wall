@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Admin · PRMSU Freedom Wall</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#103A8A">
+<meta name="theme-color" content="#3B6FE3">
 <link rel="icon" type="image/png" href="seal.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,20 +14,16 @@
 </head>
 <body>
 
-  <header class="nav">
-    <div class="nav-in">
-      <div class="brand">
-        <a href="index.html">
-          <img src="seal.png" alt="PRMSU">
-          <div>
-            <div class="brand-t">PRMSU Freedom Wall</div>
-            <div class="brand-s">Admin &amp; moderation</div>
-          </div>
-        </a>
-      </div>
-      <nav class="nav-links">
-        <a href="index.html">Back to the wall</a>
-      </nav>
+  <header class="appbar">
+    <div class="appbar-in">
+      <a class="brand2" href="index.html">
+        <img src="seal.png" alt="PRMSU">
+        <div>
+          <div class="brand2-t">PRMSU Freedom Wall</div>
+          <div class="brand2-s">Admin &amp; moderation</div>
+        </div>
+      </a>
+      <a class="back" href="index.html">← Back to the wall</a>
     </div>
   </header>
 
@@ -78,10 +74,13 @@
           <div class="who" id="dashWho">Signed in as admin</div>
         </div>
         <div class="dash-actions">
+          <button class="btn small hidden" id="pauseBtn">Pause wall</button>
           <a class="btn ghost small" href="index.html" target="_blank" rel="noopener">Open the wall ↗</a>
           <button class="btn ghost small" id="signOutBtn">Sign out</button>
         </div>
       </div>
+
+      <div id="pausedBanner" class="pause-banner hidden">The wall is paused right now — it's read-only for everyone until it's resumed.</div>
 
       <div class="stats" id="stats"></div>
 

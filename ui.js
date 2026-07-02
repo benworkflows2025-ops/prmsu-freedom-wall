@@ -235,9 +235,6 @@ export function commentsDialog({ post, defaultNick, fetchComments, submitComment
     fetchComments().then(renderList).catch(() => renderList([]));
 
     const form = el('div', 'cmt-form');
-    const nick = el('input', 'cmt-nick');
-    nick.type = 'text'; nick.maxLength = 24; nick.placeholder = 'Nickname (optional)';
-    if (defaultNick) nick.value = defaultNick;
     const row = el('div', 'cmt-send-row');
     const ta = el('textarea', 'cmt-ta');
     ta.maxLength = 300; ta.placeholder = 'Write a comment...';
@@ -249,7 +246,7 @@ export function commentsDialog({ post, defaultNick, fetchComments, submitComment
       if (!body) return;
       send.disabled = true;
       try {
-        const c = await submitComment(body, nick.value.trim());
+        const c = await submitComment(body, defaultNick || '');
         if (c) {
           const empty = list.querySelector('.cmt-empty'); if (empty) empty.remove();
           list.appendChild(commentEl(c));
@@ -263,7 +260,7 @@ export function commentsDialog({ post, defaultNick, fetchComments, submitComment
     };
     ta.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); send.click(); } });
     row.appendChild(ta); row.appendChild(send);
-    form.appendChild(nick); form.appendChild(row); form.appendChild(err);
+    form.appendChild(row); form.appendChild(err);
     card.appendChild(form);
   });
 }

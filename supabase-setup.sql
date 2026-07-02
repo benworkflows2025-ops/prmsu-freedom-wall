@@ -68,6 +68,21 @@ create table if not exists public.admins (
   email    text primary key,
   added_at timestamptz not null default now()
 );
+-- roles: 'owner' (you, all powers), 'admin' (full admin / staff), 'mod' (moderator)
+alter table public.admins add column if not exists role text not null default 'mod'
+  check (role in ('owner','admin','mod'));
+-- the earliest admin becomes the owner (one-time bootstrap)
+update public.admins set role = 'owner'
+ where email = (select email from public.admins order by added_at asc limit 1)
+   and not exists (select 1 from public.admins where role = 'owner');
+
+-- site-wide settings (single row). paused = read-only wall.
+create table if not exists public.settings (
+  id         integer primary key default 1 check (id = 1),
+  paused     boolean not null default false,
+  updated_at timestamptz not null default now()
+);
+insert into public.settings (id) values (1) on conflict (id) do nothing;
 
 -- ----------------------------------------------------------------------------
 --  HELPER: is the current signed-in user an admin?
@@ -112,6 +127,7 @@ declare
   clean_color text := coalesce(nullif(btrim(coalesce(p_color, '')), ''), 'sky');
   clean_cat   text := lower(coalesce(nullif(btrim(coalesce(p_category, '')), ''), 'confession'));
 begin
+  if (select paused from public.settings where id = 1) then raise exception 'The wall is paused right now. Please try again in a bit.'; end if;
   if char_length(clean_body) = 0 then raise exception 'Post cannot be empty.'; end if;
   if char_length(clean_body) > 500 then raise exception 'Post is too long (max 500 characters).'; end if;
   if clean_nick is not null and char_length(clean_nick) > 24 then clean_nick := left(clean_nick, 24); end if;
@@ -217,27 +233,62 @@ begin
     raise exception 'Admin has already been claimed. Ask an existing admin to add you.';
   end if;
 
-  insert into public.admins (email) values (my_email);
+  insert into public.admins (email, role) values (my_email, 'owner');
   return my_email;
 end;
 $$;
 
--- Existing admin adds another admin by email.
-create or replace function public.add_admin(p_email text)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if not public.is_admin() then
-    raise exception 'Only an admin can add admins.';
-  end if;
-  insert into public.admins (email)
-  values (lower(btrim(coalesce(p_email, ''))))
-  on conflict (email) do nothing;
-end;
+-- Role helpers ------------------------------------------------------
+create or replace function public.my_role()
+returns text language sql stable security definer set search_path = public as $$
+  select role from public.admins where email = lower(coalesce((select auth.jwt() ->> 'email'), ''));
 $$;
+create or replace function public.is_owner()
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(public.my_role() = 'owner', false);
+$$;
+create or replace function public.is_full_admin()  -- owner or full admin
+returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(public.my_role() in ('owner','admin'), false);
+$$;
+
+-- Full admin adds a moderator; only the OWNER may grant full admin.
+drop function if exists public.add_admin(text);
+create or replace function public.add_admin(p_email text, p_role text default 'mod')
+returns void language plpgsql security definer set search_path = public as $$
+declare r text := lower(coalesce(nullif(btrim(coalesce(p_role, '')), ''), 'mod'));
+begin
+  if not public.is_full_admin() then raise exception 'Only a full admin can add people.'; end if;
+  if r not in ('mod','admin') then r := 'mod'; end if;
+  if r = 'admin' and not public.is_owner() then r := 'mod'; end if;  -- only the owner grants full admin
+  insert into public.admins (email, role) values (lower(btrim(coalesce(p_email, ''))), r)
+  on conflict (email) do nothing;
+end;$$;
+
+-- Owner changes someone's role (mod <-> admin). The owner role is protected.
+create or replace function public.set_admin_role(p_email text, p_role text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_owner() then raise exception 'Only the owner can change roles.'; end if;
+  if p_role not in ('admin','mod') then raise exception 'Invalid role.'; end if;
+  update public.admins set role = p_role where lower(email) = lower(btrim(p_email)) and role <> 'owner';
+end;$$;
+
+-- Owner removes an admin/mod. The owner cannot be removed.
+create or replace function public.remove_admin(p_email text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_owner() then raise exception 'Only the owner can remove people.'; end if;
+  delete from public.admins where lower(email) = lower(btrim(p_email)) and role <> 'owner';
+end;$$;
+
+-- Full admin pauses / resumes the wall (read-only when paused).
+create or replace function public.set_paused(p_paused boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_full_admin() then raise exception 'Only a full admin can pause the wall.'; end if;
+  update public.settings set paused = coalesce(p_paused, false), updated_at = now() where id = 1;
+end;$$;
 
 -- Admin sets a post's status (visible / pending / hidden).
 create or replace function public.admin_set_status(p_post_id uuid, p_status text)
@@ -486,6 +537,7 @@ declare
   clean_body text := btrim(coalesce(p_body, ''));
   clean_nick text := nullif(btrim(coalesce(p_nickname, '')), '');
 begin
+  if (select paused from public.settings where id = 1) then raise exception 'The wall is paused right now.'; end if;
   if char_length(clean_body) = 0 then raise exception 'Comment cannot be empty.'; end if;
   if char_length(clean_body) > 300 then raise exception 'Comment is too long (max 300 characters).'; end if;
   if clean_nick is not null and char_length(clean_nick) > 24 then clean_nick := left(clean_nick, 24); end if;
@@ -559,6 +611,12 @@ drop policy if exists admin_apps_admin_read on public.admin_applications;
 create policy admin_apps_admin_read on public.admin_applications
   for select using (public.is_admin());
 
+-- SETTINGS ----------------------------------------------------------
+-- Anyone may read the paused flag (so the wall can show read-only mode).
+alter table public.settings enable row level security;
+drop policy if exists settings_public_read on public.settings;
+create policy settings_public_read on public.settings for select using (true);
+
 -- ----------------------------------------------------------------------------
 --  GRANTS  (who may call each function)
 -- ----------------------------------------------------------------------------
@@ -567,7 +625,13 @@ grant execute on function public.like_post(uuid, integer)            to anon, au
 grant execute on function public.report_post(uuid, text, text)       to anon, authenticated;
 grant execute on function public.is_admin()                         to anon, authenticated;
 grant execute on function public.claim_admin()                      to authenticated;
-grant execute on function public.add_admin(text)                    to authenticated;
+grant execute on function public.add_admin(text, text)              to authenticated;
+grant execute on function public.my_role()                          to anon, authenticated;
+grant execute on function public.is_owner()                         to anon, authenticated;
+grant execute on function public.is_full_admin()                    to anon, authenticated;
+grant execute on function public.set_admin_role(text, text)         to authenticated;
+grant execute on function public.remove_admin(text)                 to authenticated;
+grant execute on function public.set_paused(boolean)                to authenticated;
 grant execute on function public.admin_set_status(uuid, text)       to authenticated;
 grant execute on function public.admin_delete_post(uuid)            to authenticated;
 grant execute on function public.submit_admin_application(text, text, text, text, text) to anon, authenticated;

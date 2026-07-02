@@ -296,10 +296,35 @@ export const DB = {
     if (error) boom(error, 'Could not load admins.');
     return data || [];
   },
-  async addAdmin(email) {
+  async addAdmin(email, role) {
     if (!CONFIGURED) return;
-    const { error } = await supa.rpc('add_admin', { p_email: email });
-    if (error) boom(error, 'Could not add admin.');
+    const { error } = await supa.rpc('add_admin', { p_email: email, p_role: role || 'mod' });
+    if (error) boom(error, 'Could not add.');
+  },
+  async myRole() {
+    if (!CONFIGURED) return demoIsAdmin() ? 'owner' : null;
+    const { data } = await supa.rpc('my_role');
+    return data || null;
+  },
+  async setAdminRole(email, role) {
+    if (!CONFIGURED) return;
+    const { error } = await supa.rpc('set_admin_role', { p_email: email, p_role: role });
+    if (error) boom(error, 'Could not change role.');
+  },
+  async removeAdmin(email) {
+    if (!CONFIGURED) return;
+    const { error } = await supa.rpc('remove_admin', { p_email: email });
+    if (error) boom(error, 'Could not remove.');
+  },
+  async isPaused() {
+    if (!CONFIGURED) { try { return localStorage.getItem('prmsu_wall_demo_paused') === '1'; } catch { return false; } }
+    const { data } = await supa.from('settings').select('paused').eq('id', 1).maybeSingle();
+    return !!(data && data.paused);
+  },
+  async setPaused(v) {
+    if (!CONFIGURED) { localStorage.setItem('prmsu_wall_demo_paused', v ? '1' : '0'); return; }
+    const { error } = await supa.rpc('set_paused', { p_paused: !!v });
+    if (error) boom(error, 'Could not update.');
   },
 
   /* ---------------- admin moderation ---------------- */
