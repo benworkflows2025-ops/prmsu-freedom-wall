@@ -108,20 +108,6 @@ function buildCatSelect(container, current, onPick) {
     container.appendChild(b);
   });
 }
-function buildFilterChips() {
-  const wrap = $('filterChips'); wrap.textContent = '';
-  FILTERS.forEach((f) => {
-    const b = el('button', 'chip' + (f.key === state.cat ? ' active' : ''), f.label);
-    b.type = 'button'; b.dataset.cat = f.key;
-    b.onclick = () => {
-      state.cat = f.key; state.shown = LOAD_STEP;
-      wrap.querySelectorAll('.chip').forEach((x) => x.classList.toggle('active', x.dataset.cat === f.key));
-      b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-      render();
-    };
-    wrap.appendChild(b);
-  });
-}
 function buildSortSeg() {
   const wrap = $('sortSeg'); wrap.textContent = '';
   SORTS.forEach((s) => {
@@ -131,24 +117,6 @@ function buildSortSeg() {
     wrap.appendChild(b);
   });
 }
-function buildTrending() {
-  const wrap = $('trendList'); if (!wrap) return; wrap.textContent = '';
-  const counts = {};
-  state.posts.forEach((p) => { const c = catOf(p); counts[c] = (counts[c] || 0) + 1; });
-  const top = POST_CATS.map((c) => ({ ...c, n: counts[c.key] || 0 })).sort((a, b) => b.n - a.n).slice(0, 5);
-  top.forEach((c) => {
-    const b = el('button', 'trend-item'); b.type = 'button';
-    const dot = el('span', 'trend-dot'); dot.style.background = CAT_COLOR[c.key];
-    b.appendChild(dot); b.appendChild(el('b', null, c.label));
-    b.appendChild(el('span', null, c.n + (c.n === 1 ? ' post' : ' posts')));
-    b.onclick = () => {
-      state.cat = c.key; state.shown = LOAD_STEP; buildFilterChips(); render();
-      document.getElementById('wall').scrollIntoView({ behavior: 'smooth' });
-    };
-    wrap.appendChild(b);
-  });
-}
-
 /* ============================================================================
    FEED
    ========================================================================== */
@@ -373,8 +341,7 @@ function upsertPost(post, prepend) {
   if (state.map.has(post.id)) { Object.assign(state.map.get(post.id), post); patchCard(state.map.get(post.id)); buildTrending(); return; }
   state.map.set(post.id, post);
   if (prepend) state.posts.unshift(post); else state.posts.push(post);
-  render(); buildTrending();
-}
+  render();}
 function removePost(id) { if (!state.map.has(id)) return; state.map.delete(id); state.posts = state.posts.filter((p) => p.id !== id); render(); buildTrending(); }
 function cssEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 
@@ -447,7 +414,7 @@ function boot() {
     badges.appendChild(span);
   }
   updateUserCount();
-  buildFilterChips(); buildSortSeg(); initDesktopComposer(); initChrome();
+  buildSortSeg(); initDesktopComposer(); initChrome();
   load(false); wireRealtime();
 }
 boot();
