@@ -380,6 +380,23 @@ begin
 end;
 $$;
 
+-- Admin deletes an application record entirely (e.g. to clear the reviewed
+-- list so other admins can't see who applied). Any leftover images are removed
+-- by the client via the Storage API before this runs.
+create or replace function public.admin_delete_application(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Not authorised.';
+  end if;
+  delete from public.admin_applications where id = p_id;
+end;
+$$;
+
 -- ----------------------------------------------------------------------------
 --  PRIVATE STORAGE BUCKET for the verification images
 -- ----------------------------------------------------------------------------
@@ -537,6 +554,7 @@ grant execute on function public.admin_delete_post(uuid)            to authentic
 grant execute on function public.submit_admin_application(text, text, text, text, text) to anon, authenticated;
 grant execute on function public.approve_admin_application(uuid)    to authenticated;
 grant execute on function public.reject_admin_application(uuid)     to authenticated;
+grant execute on function public.admin_delete_application(uuid)     to authenticated;
 
 -- ----------------------------------------------------------------------------
 --  REALTIME  (live updates on the public wall)

@@ -260,13 +260,13 @@ function buildAppCard(app) {
   card.appendChild(el('div', 'app-email', app.email || ''));
   if (app.note) card.appendChild(el('div', 'app-note', app.note));
 
+  const acts = el('div', 'arow-actions');
   if (app.status === 'pending') {
     const imgs = el('div', 'app-imgs');
     imgs.appendChild(buildAppImage(app, 'id', 'School ID'));
     imgs.appendChild(buildAppImage(app, 'face', 'Selfie'));
     card.appendChild(imgs);
 
-    const acts = el('div', 'arow-actions');
     const approve = el('button', 'btn gold small', 'Approve');
     approve.onclick = async () => {
       const ok = await confirmDialog({ title: 'Approve ' + (app.full_name || 'this applicant') + '?', message: 'They become a moderator, and their ID + selfie are deleted right away.', confirmText: 'Approve' });
@@ -283,10 +283,25 @@ function buildAppCard(app) {
     };
     acts.appendChild(approve);
     acts.appendChild(reject);
-    card.appendChild(acts);
   } else {
     card.appendChild(el('div', 'app-deleted', 'Verification photos were deleted after review.'));
   }
+
+  const del = el('button', 'btn ghost small', 'Delete record');
+  del.onclick = async () => {
+    const ok = await confirmDialog({
+      title: 'Delete this application record?',
+      message: app.status === 'pending'
+        ? 'This permanently removes the application and its uploaded photos.'
+        : 'This permanently removes this record so other admins cannot see it. If it was approved, the person stays a moderator (remove them from the Admins list separately).',
+      confirmText: 'Delete', danger: true,
+    });
+    if (!ok) return;
+    try { await DB.adminDeleteApplication(app); toast('Application deleted.', 'ok'); loadDash(); }
+    catch (err) { toast(err.message || 'Could not delete.', 'err'); }
+  };
+  acts.appendChild(del);
+  card.appendChild(acts);
   return card;
 }
 function buildAppImage(app, which, label) {

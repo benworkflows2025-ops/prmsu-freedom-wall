@@ -228,6 +228,16 @@ export const DB = {
     if (error) boom(error, 'Could not reject.');
   },
 
+  async adminDeleteApplication(app) {
+    if (!CONFIGURED) {
+      demo.write(DEMO_APPS, demo.read(DEMO_APPS).filter((x) => x.id !== app.id));
+      return;
+    }
+    await deleteAppFiles(app); // remove any still-stored ID/selfie (pending apps) via Storage API
+    const { error } = await supa.rpc('admin_delete_application', { p_id: app.id });
+    if (error) boom(error, 'Could not delete the application.');
+  },
+
   /* ---------------- admin auth ---------------- */
   async signUp(email, password) {
     if (!CONFIGURED) { localStorage.setItem(DEMO_ADMIN, '1'); return { demo: true }; }
