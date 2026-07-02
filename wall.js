@@ -108,6 +108,20 @@ function buildCatSelect(container, current, onPick) {
     container.appendChild(b);
   });
 }
+function buildFilterChips() {
+  const wrap = $('filterChips'); if (!wrap) return; wrap.textContent = '';
+  FILTERS.forEach((f) => {
+    const b = el('button', 'chip' + (f.key === state.cat ? ' active' : ''), f.label);
+    b.type = 'button'; b.dataset.cat = f.key;
+    b.onclick = () => {
+      state.cat = f.key; state.shown = LOAD_STEP;
+      wrap.querySelectorAll('.chip').forEach((x) => x.classList.toggle('active', x.dataset.cat === f.key));
+      b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      render();
+    };
+    wrap.appendChild(b);
+  });
+}
 function buildSortSeg() {
   const wrap = $('sortSeg'); wrap.textContent = '';
   SORTS.forEach((s) => {
@@ -414,7 +428,7 @@ function boot() {
     badges.appendChild(span);
   }
   updateUserCount();
-  buildSortSeg(); initDesktopComposer(); initChrome();
+  buildFilterChips(); buildSortSeg(); initDesktopComposer(); initChrome();
   load(false); wireRealtime();
 }
 boot();
