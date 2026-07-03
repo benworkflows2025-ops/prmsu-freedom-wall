@@ -552,10 +552,23 @@ body.sheet-open{overflow:hidden}
 @media (max-width:520px){.live-online{font-size:11.5px;padding:5px 10px}}
 
 /* paused-wall bar (public) + admin banner */
-.pause-bar{display:flex;gap:11px;align-items:flex-start;background:#FFF1E6;border:1px solid #F6C89B;color:#7a4712;border-radius:14px;padding:12px 14px;margin:0 0 12px;font-size:13.5px;line-height:1.5}
-.pause-bar svg{width:20px;height:20px;flex:0 0 auto;margin-top:1px}
-.pause-bar b{color:#5a340b}
-.pause-banner{background:#FFF1E6;border:1px solid #F6C89B;color:#7a4712;border-radius:12px;padding:11px 14px;font-size:13.5px;font-weight:600;margin-bottom:16px}
+.pause-bar{display:flex;gap:13px;align-items:center;background:linear-gradient(135deg,#FFE289,#F5B82E);
+  border:1.5px solid #E4A70F;color:#5a3a0b;border-radius:16px;padding:14px 16px;margin:0 0 14px;
+  font-size:14.5px;line-height:1.45;font-weight:600;box-shadow:0 10px 26px -12px rgba(228,167,15,.75);
+  animation:pausepulse 2.6s ease-in-out infinite}
+.pause-bar .pb-ico{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:rgba(74,47,8,.16);
+  display:flex;align-items:center;justify-content:center;animation:pauseblink 2.6s ease-in-out infinite}
+.pause-bar .pb-ico svg{width:19px;height:19px;color:#3a2506}
+.pause-bar .pb-txt{display:flex;flex-direction:column;gap:1px}
+.pause-bar .pb-txt b{color:#3a2506;font-weight:800;font-size:15px}
+.pause-bar .pb-txt span{color:#6b4712}
+@keyframes pausepulse{0%,100%{box-shadow:0 10px 26px -12px rgba(228,167,15,.55)}50%{box-shadow:0 12px 34px -10px rgba(228,167,15,1)}}
+@keyframes pauseblink{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@media (prefers-reduced-motion:reduce){.pause-bar,.pause-bar .pb-ico{animation:none}}
+.pause-banner{display:flex;gap:11px;align-items:center;background:linear-gradient(135deg,#FFE289,#F5B82E);
+  border:1.5px solid #E4A70F;color:#3a2506;border-radius:13px;padding:12px 15px;font-size:14px;font-weight:700;margin-bottom:16px;
+  box-shadow:0 8px 20px -12px rgba(228,167,15,.7)}
+.pause-banner::before{content:"⏸";font-size:16px}
 
 /* admin roles */
 .role-badge{margin-left:6px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:999px}
