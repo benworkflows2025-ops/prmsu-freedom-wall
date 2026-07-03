@@ -271,7 +271,9 @@ h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;letter-spacing:-.02em}
 .owner-fab svg{width:19px;height:19px;flex:0 0 auto}
 .owner-fab:hover{background:#F1F5FE;border-color:#CBD7EE}
 .owner-fab:active{transform:scale(.95)}
-.owner-fab.has-unread::after{content:"";position:absolute;top:-3px;right:-3px;width:13px;height:13px;border-radius:50%;background:#EC4E86;border:2px solid var(--bg);box-shadow:0 0 0 1px #EC4E86}
+.owner-fab.has-unread::after{content:attr(data-badge);position:absolute;top:-7px;right:-7px;min-width:20px;height:20px;padding:0 5px;
+  border-radius:999px;background:#EF4444;color:#fff;font-size:12px;font-weight:800;line-height:1;
+  display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);box-shadow:0 2px 7px -1px rgba(239,68,68,.65)}
 /* on mobile the Post button sits in the corner, so lift Message-owner above it */
 @media (max-width:859px){.owner-fab{bottom:calc(82px + var(--sab))}}
 @media (max-width:479px){.owner-fab span{display:none}.owner-fab{padding:0;width:48px;justify-content:center}}

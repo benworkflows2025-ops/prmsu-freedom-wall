@@ -386,10 +386,15 @@ async function updateOwnerDot() {
   try {
     const token = localStorage.getItem('prmsu_owner_thread');
     if (!token) { fab.classList.remove('has-unread'); return; }
-    const seen = Number(localStorage.getItem('prmsu_owner_seen') || 0);
+    // compare SERVER timestamps only (never client Date.now) so clock skew
+    // can't hide the badge. "seen" holds the created_at of the last message
+    // the visitor has looked at.
+    const seenStr = localStorage.getItem('prmsu_owner_seen') || '';
+    const seenT = seenStr ? new Date(seenStr).getTime() : 0;
     const msgs = await DB.fetchOwnerThread();
-    const hasNew = msgs.some((m) => m.sender === 'owner' && new Date(m.created_at).getTime() > seen);
-    fab.classList.toggle('has-unread', hasNew);
+    const unread = msgs.filter((m) => m.sender === 'owner' && new Date(m.created_at).getTime() > seenT).length;
+    fab.dataset.badge = unread > 9 ? '9+' : String(unread);
+    fab.classList.toggle('has-unread', unread > 0);
   } catch (e) {}
 }
 function openOwnerChat() {
@@ -419,7 +424,8 @@ function openOwnerChat() {
       try {
         const fresh = await DB.fetchOwnerThread();
         if (!rendered || fresh.length !== msgs.length) { msgs = fresh; renderChatBubbles(box, msgs); rendered = true; if (scroll) scrollDown(); }
-        try { localStorage.setItem('prmsu_owner_seen', String(Date.now())); } catch (e) {}
+        // mark everything up to the latest message as seen (server timestamp)
+        if (fresh.length) { try { localStorage.setItem('prmsu_owner_seen', fresh[fresh.length - 1].created_at); } catch (e) {} }
         updateOwnerDot();
       } catch (e) {
         if (!rendered) {
@@ -525,6 +531,8 @@ function boot() {
   updateOnline(); setInterval(updateOnline, 30000);
   buildFilterChips(); buildSortSeg(); initDesktopComposer(); initChrome();
   load(false); wireRealtime(); checkPaused();
-  updateOwnerDot(); setInterval(updateOwnerDot, 25000);
+  updateOwnerDot(); setInterval(updateOwnerDot, 12000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) updateOwnerDot(); });
+  window.addEventListener('focus', updateOwnerDot);
 }
 boot();
